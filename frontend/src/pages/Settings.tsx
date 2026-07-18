@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { breaksApi } from "../api/breaks";
+import { HabitManager } from "../components/HabitManager";
 import { pushBreakConfigToServiceWorker } from "../hooks/useNotificationScheduler";
 import type { BreakConfig } from "../types";
 
@@ -84,6 +85,8 @@ export default function Settings() {
             </button>
           </div>
         )}
+
+        <HabitManager />
 
         <div className="card">
           <h2>Instalar la app</h2>

@@ -5,6 +5,18 @@ import { Stepper } from "../components/Stepper";
 import type { HabitWithStatus, PeriodizationInfo } from "../types";
 import { todayIsoMadrid as todayIso } from "../utils/date";
 
+// Paso del stepper proporcional al objetivo del hábito, para que registrar
+// sea rápido con cualquier escala: 2L de agua -> 0.25, 60 min de estudio -> 5,
+// 10.000 pasos -> 500. Sin objetivo definido, incrementos de 1.
+function stepFor(habit: HabitWithStatus): number {
+  const target = habit.target_value;
+  if (target === null) return 1;
+  if (target <= 3) return 0.25;
+  if (target <= 12) return 0.5;
+  if (target <= 300) return 5;
+  return 500;
+}
+
 export default function Today() {
   const [habits, setHabits] = useState<HabitWithStatus[]>([]);
   const [periodization, setPeriodization] = useState<PeriodizationInfo | null>(null);
@@ -71,7 +83,7 @@ export default function Today() {
                 <div style={{ width: 150 }}>
                   <Stepper
                     value={habit.value_today}
-                    step={habit.unit === "L" ? 0.25 : 500}
+                    step={stepFor(habit)}
                     onChange={(v) => setNumericValue(habit, v)}
                     suffix={habit.unit ? ` ${habit.unit}` : ""}
                   />

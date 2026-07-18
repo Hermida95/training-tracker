@@ -57,6 +57,33 @@ def test_streak_breaks_on_missed_due_day(client):
     assert today[0]["current_streak"] == 1
 
 
+def test_update_and_delete_custom_habit(client):
+    """Flujo del gestor de hábitos de la UI: crear personalizado, cambiar días, borrar."""
+    res = client.post(
+        "/api/v1/habits",
+        json={
+            "key": "1h_de_estudio",
+            "name": "1h de estudio",
+            "value_type": "numeric",
+            "target_value": 60,
+            "unit": "min",
+            "active_days": [0, 1, 2, 3, 4],
+        },
+    )
+    assert res.status_code == 201
+    habit_id = res.json()["id"]
+
+    patched = client.patch(f"/api/v1/habits/{habit_id}", json={"active_days": [5, 6]})
+    assert patched.status_code == 200
+    assert patched.json()["active_days"] == [5, 6]
+    # El resto de campos no enviados no deben cambiar
+    assert patched.json()["target_value"] == 60
+
+    deleted = client.delete(f"/api/v1/habits/{habit_id}")
+    assert deleted.status_code == 204
+    assert client.get(f"/api/v1/habits/{habit_id}").status_code == 404
+
+
 def test_numeric_habit_marks_done_when_target_reached(client):
     res = client.post(
         "/api/v1/habits",
