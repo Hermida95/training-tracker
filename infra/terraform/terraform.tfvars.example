@@ -1,0 +1,25 @@
+# Copia este fichero a terraform.tfvars (gitignored) y rellena tus valores.
+# NUNCA subas terraform.tfvars a git: aunque aquí no metamos contraseñas a
+# mano, sí queda el project_id y podrías añadir cosas sensibles más adelante.
+
+project_id = "tu-project-id-de-gcp"
+region     = "europe-southwest1"
+
+# Se actualizan en cada deploy (ver README → CI/CD). Para el primer apply usa
+# ":latest" o el tag que hayas subido a mano.
+api_image   = "europe-southwest1-docker.pkg.dev/tu-project-id-de-gcp/training-tracker/api:latest"
+front_image = "europe-southwest1-docker.pkg.dev/tu-project-id-de-gcp/training-tracker/front:latest"
+
+# --- Base de datos ---
+# Opción A (por defecto): Cloud SQL gestionado por Terraform.
+use_cloud_sql = true
+
+# Opción B: Postgres gratuito externo (Neon / Supabase). Pon use_cloud_sql en
+# false y descomenta la siguiente línea con tu connection string real:
+# use_cloud_sql          = false
+# external_database_url = "postgresql+psycopg://user:pass@ep-xxx.neon.tech/training_tracker?sslmode=require"
+
+# Rellena esto en un SEGUNDO apply, una vez sepas la URL real del front
+# (google_cloud_run_v2_service.front.uri del primer apply). Con "*" funciona
+# pero es menos estricto en CORS.
+cors_origin = "*"

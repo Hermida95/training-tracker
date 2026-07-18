@@ -1,0 +1,27 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "backend",
+      "runtimeExecutable": "backend/.venv/bin/uvicorn",
+      "runtimeArgs": ["app.main:app", "--host", "0.0.0.0", "--port", "8000"],
+      "port": 8000,
+      "cwd": "backend",
+      "env": {
+        "DATABASE_URL": "sqlite:///./local.db",
+        "ENVIRONMENT": "local",
+        "CORS_ORIGINS": "http://localhost:5173"
+      }
+    },
+    {
+      "name": "frontend",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--", "--host", "0.0.0.0"],
+      "port": 5173,
+      "cwd": "frontend",
+      "env": {
+        "VITE_API_BASE_URL": "http://localhost:8000/api/v1"
+      }
+    }
+  ]
+}
