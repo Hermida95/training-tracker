@@ -63,7 +63,7 @@ export default function Progress() {
             </div>
           </div>
           <button className="primary big" style={{ marginTop: 12 }} onClick={saveMetric}>
-            {saved ? "Guardado ✅" : "Guardar medición"}
+            {saved ? "Guardado ✓" : "Guardar medición"}
           </button>
         </div>
 
@@ -84,11 +84,11 @@ export default function Progress() {
                     borderRadius: 8,
                   }}
                 />
-                <Line type="monotone" dataKey="peso" stroke="#4ade80" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="peso" stroke="#c2a878" strokeWidth={2} dot={false} />
                 <Line
                   type="monotone"
                   dataKey="cintura"
-                  stroke="#60a5fa"
+                  stroke="#8fa3ad"
                   strokeWidth={2}
                   dot={false}
                 />
@@ -112,7 +112,7 @@ export default function Progress() {
             <p>Cumplimiento de hábitos: {Math.round(stats.habit_completion_rate * 100)}%</p>
             <p>
               Puntos del mes: <strong>{stats.points_total}</strong> · {stats.perfect_days}{" "}
-              {stats.perfect_days === 1 ? "día perfecto" : "días perfectos"} ⭐
+              {stats.perfect_days === 1 ? "día perfecto" : "días perfectos"}
             </p>
 
             <div className="btn-row" style={{ marginTop: 12 }}>

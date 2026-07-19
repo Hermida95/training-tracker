@@ -1,18 +1,28 @@
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import { habitsApi } from "../api/habits";
 import { workoutsApi } from "../api/workouts";
+import {
+  CheckIcon,
+  CircleCheckIcon,
+  CircleHalfIcon,
+  CircleIcon,
+  FlameIcon,
+  LeafIcon,
+  StarIcon,
+} from "../components/icons";
 import { Stepper } from "../components/Stepper";
 import type { DayScore, DayScoreTier, HabitWithStatus, PeriodizationInfo } from "../types";
 import { todayIsoMadrid as todayIso } from "../utils/date";
 
-// Texto y emoji por nivel de puntuación del día. El "plus" grande es el día
+// Icono y texto por nivel de puntuación del día. El "plus" grande es el día
 // perfecto (100% -> 3 pts); un día decente (>=75%) mantiene la racha viva.
-const TIER_DISPLAY: Record<DayScoreTier, { emoji: string; label: string }> = {
-  perfect: { emoji: "⭐", label: "¡Día perfecto! +3 pts" },
-  great: { emoji: "💪", label: "Buen día · +2 pts" },
-  half: { emoji: "🌗", label: "A medias · +1 pt" },
-  missed: { emoji: "▫️", label: "Aún sin puntos hoy" },
-  rest: { emoji: "🌤️", label: "Día libre" },
+const TIER_DISPLAY: Record<DayScoreTier, { icon: ReactNode; label: string }> = {
+  perfect: { icon: <StarIcon size={26} />, label: "Día perfecto · +3 pts" },
+  great: { icon: <CircleCheckIcon size={26} />, label: "Buen día · +2 pts" },
+  half: { icon: <CircleHalfIcon size={26} />, label: "A medias · +1 pt" },
+  missed: { icon: <CircleIcon size={26} />, label: "Aún sin puntos hoy" },
+  rest: { icon: <LeafIcon size={26} />, label: "Día libre" },
 };
 
 // Paso del stepper proporcional al objetivo del hábito, para que registrar
@@ -82,14 +92,14 @@ export default function Today() {
 
         {score && score.tier !== "rest" && (
           <div className={`score-card tier-${score.tier}`}>
-            <span className="score-emoji">{TIER_DISPLAY[score.tier].emoji}</span>
+            <span className="score-icon">{TIER_DISPLAY[score.tier].icon}</span>
             <div className="score-info">
               <strong>{TIER_DISPLAY[score.tier].label}</strong>
               <span>
-                🔥 Racha: {score.streak} {score.streak === 1 ? "día" : "días"}
+                <FlameIcon /> Racha: {score.streak} {score.streak === 1 ? "día" : "días"}
                 {score.tier !== "perfect" &&
                   score.due_count > 0 &&
-                  ` · ${score.done_count}/${score.due_count} para el ⭐`}
+                  ` · ${score.done_count}/${score.due_count} para el pleno`}
               </span>
             </div>
             <div
@@ -111,14 +121,15 @@ export default function Today() {
           <h2>Checklist</h2>
           {loading && <p>Cargando…</p>}
           {!loading && dueHabits.length === 0 && (
-            <p className="empty-state">Nada programado hoy. Descansa 🙌</p>
+            <p className="empty-state">Nada programado hoy. Descansa.</p>
           )}
           {dueHabits.map((habit) => (
             <div className="habit-row" key={habit.id}>
               <div className="info">
                 <span>{habit.name}</span>
                 <span className="streak">
-                  🔥 racha de {habit.current_streak} {habit.current_streak === 1 ? "día" : "días"}
+                  <FlameIcon size={12} /> racha de {habit.current_streak}{" "}
+                  {habit.current_streak === 1 ? "día" : "días"}
                 </span>
               </div>
 
@@ -137,7 +148,7 @@ export default function Today() {
                   onClick={() => toggleDone(habit)}
                   aria-label={habit.done_today ? "Marcar como pendiente" : "Marcar como hecho"}
                 >
-                  {habit.done_today ? "✓" : ""}
+                  {habit.done_today ? <CheckIcon /> : null}
                 </button>
               )}
             </div>

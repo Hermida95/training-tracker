@@ -194,7 +194,7 @@ export default function Workout() {
         </button>
 
         {savedSessionId && !comparison && workoutType === "RUNNING" && (
-          <p style={{ marginTop: 12 }}>Sesión guardada ✅</p>
+          <p style={{ marginTop: 12 }}>Sesión guardada ✓</p>
         )}
 
         {comparison && (

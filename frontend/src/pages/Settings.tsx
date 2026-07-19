@@ -81,7 +81,7 @@ export default function Settings() {
               Activo: Lunes a Viernes · Zona horaria: {config.timezone}
             </p>
             <button className="primary big" style={{ marginTop: 12 }} onClick={save}>
-              {saved ? "Guardado ✅" : "Guardar"}
+              {saved ? "Guardado ✓" : "Guardar"}
             </button>
           </div>
         )}

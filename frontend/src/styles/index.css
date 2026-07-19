@@ -1,32 +1,40 @@
+/* Estética nórdica / gimnasio boutique: base cálida de carbón y piedra,
+   un único acento bronce, bordes de 1px, radios contenidos y tipografía
+   con aire (versalitas espaciadas en los rótulos). Nada de colores neón. */
+
 :root {
   color-scheme: dark light;
 
-  --bg: #0f172a;
-  --bg-elevated: #1a2436;
-  --bg-card: #17213363;
-  --border: #2a3650;
-  --text: #e8ecf4;
-  --text-muted: #93a1bd;
-  --accent: #4ade80;
-  --accent-strong: #22c55e;
-  --danger: #f87171;
-  --warning: #fbbf24;
-  --radius: 16px;
+  --bg: #171512;
+  --bg-elevated: #1f1c18;
+  --bg-card: #26221d66;
+  --border: #322d26;
+  --text: #ece7de;
+  --text-muted: #98917f;
+  --accent: #c2a878;
+  --accent-strong: #d4bc8f;
+  --accent-ink: #221c11; /* texto sobre superficies bronce */
+  --danger: #b8756a;
+  --warning: #c2a878;
+  --radius: 10px;
 
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  letter-spacing: 0.01em;
 }
 
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #f4f6fb;
-    --bg-elevated: #ffffff;
-    --bg-card: #ffffffcc;
-    --border: #dde3ef;
-    --text: #101828;
-    --text-muted: #5b6576;
-    --accent: #16a34a;
-    --accent-strong: #15803d;
+    --bg: #f2efe9;
+    --bg-elevated: #faf8f4;
+    --bg-card: #ffffffb3;
+    --border: #e0dacd;
+    --text: #26221c;
+    --text-muted: #837b6c;
+    --accent: #a3855a;
+    --accent-strong: #8d7148;
+    --accent-ink: #ffffff;
+    --danger: #a35f54;
   }
 }
 
@@ -65,8 +73,22 @@ h1, h2, h3 {
   margin: 0 0 8px;
 }
 
-h1 { font-size: 1.4rem; }
-h2 { font-size: 1.1rem; color: var(--text-muted); font-weight: 600; }
+h1 {
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* Rótulos de sección como en la cartelería de un gimnasio boutique:
+   pequeños, en mayúsculas y con mucho tracking. */
+h2 {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  margin-bottom: 12px;
+}
 
 p { margin: 0 0 8px; color: var(--text-muted); }
 
@@ -74,23 +96,23 @@ p { margin: 0 0 8px; color: var(--text-muted); }
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 16px;
-  margin-bottom: 12px;
+  padding: 18px;
+  margin-bottom: 14px;
 }
 
 /* Botones grandes: pensados para tocar entre series en el gym, con el pulgar,
    sin tener que mirar demasiado la pantalla. Min 48px de alto (guideline táctil). */
 button {
   font: inherit;
+  letter-spacing: inherit;
   cursor: pointer;
-  border: none;
-  border-radius: 12px;
+  border-radius: 8px;
   min-height: 48px;
   padding: 12px 18px;
   background: var(--bg-elevated);
   color: var(--text);
   border: 1px solid var(--border);
-  transition: transform 0.05s ease, background 0.15s ease;
+  transition: transform 0.05s ease, background 0.15s ease, border-color 0.15s ease;
 }
 
 button:active {
@@ -99,9 +121,9 @@ button:active {
 
 button.primary {
   background: var(--accent);
-  color: #052e16;
+  color: var(--accent-ink);
   border-color: var(--accent);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 button.primary:active {
@@ -111,7 +133,7 @@ button.primary:active {
 button.danger {
   background: transparent;
   color: var(--danger);
-  border-color: var(--danger);
+  border-color: color-mix(in srgb, var(--danger) 55%, var(--border));
 }
 
 button.ghost {
@@ -120,8 +142,10 @@ button.ghost {
 
 button.big {
   width: 100%;
-  min-height: 64px;
-  font-size: 1.05rem;
+  min-height: 60px;
+  font-size: 1rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
 }
 
 button:disabled {
@@ -138,15 +162,27 @@ button:disabled {
   flex: 1;
 }
 
+label {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
 input, select, textarea {
   font: inherit;
   background: var(--bg-card);
   color: var(--text);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: 8px;
   padding: 10px 12px;
   min-height: 44px;
   width: 100%;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--accent);
 }
 
 input[type="number"] {
@@ -162,38 +198,41 @@ input[type="number"] {
 
 .stepper button {
   min-height: 48px;
-  font-size: 1.3rem;
-  font-weight: 700;
+  font-size: 1.2rem;
+  font-weight: 500;
   padding: 0;
 }
 
 .stepper output {
   text-align: center;
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-size: 1.15rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .pill {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 4px 10px;
+  padding: 4px 12px;
   border-radius: 999px;
-  font-size: 0.78rem;
+  font-size: 0.74rem;
   font-weight: 600;
-  background: var(--bg-card);
+  letter-spacing: 0.08em;
+  background: transparent;
   border: 1px solid var(--border);
   color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 .pill.ok {
   color: var(--accent);
-  border-color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
 }
 
 .pill.warn {
   color: var(--warning);
-  border-color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 50%, var(--border));
 }
 
 .habit-row {
@@ -201,22 +240,27 @@ input[type="number"] {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 0;
+  padding: 14px 0;
   border-bottom: 1px solid var(--border);
 }
 
 .habit-row:last-child {
   border-bottom: none;
+  padding-bottom: 4px;
 }
 
 .habit-row .info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
-.habit-row .streak {
-  font-size: 0.78rem;
+.habit-row .streak,
+.streak {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.76rem;
   color: var(--text-muted);
 }
 
@@ -224,19 +268,19 @@ input[type="number"] {
   width: 52px;
   height: 52px;
   border-radius: 50%;
-  font-size: 1.4rem;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 0;
   min-height: unset;
   flex-shrink: 0;
+  color: transparent;
 }
 
 .check-btn.done {
   background: var(--accent);
   border-color: var(--accent);
-  color: #052e16;
+  color: var(--accent-ink);
 }
 
 nav.tabbar {
@@ -244,30 +288,35 @@ nav.tabbar {
   bottom: 0;
   display: flex;
   border-top: 1px solid var(--border);
-  background: var(--bg-elevated);
+  background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
+  backdrop-filter: blur(12px);
   padding-bottom: env(safe-area-inset-bottom);
 }
 
 nav.tabbar a {
   flex: 1;
   text-align: center;
-  padding: 10px 4px 8px;
+  padding: 12px 4px 10px;
   text-decoration: none;
   color: var(--text-muted);
-  font-size: 0.75rem;
+  font-size: 0.68rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 4px;
 }
 
 nav.tabbar a.active {
   color: var(--accent);
-  font-weight: 700;
 }
 
 nav.tabbar .icon {
-  font-size: 1.35rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 24px;
 }
 
 .set-row {
@@ -280,40 +329,47 @@ nav.tabbar .icon {
 
 .set-row .set-index {
   color: var(--text-muted);
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 .delta {
-  font-size: 0.78rem;
-  font-weight: 700;
+  font-size: 0.76rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
 }
 
 .delta.up { color: var(--accent); }
 .delta.down { color: var(--danger); }
 .delta.flat { color: var(--text-muted); }
 
+/* Banner de periodización: sin degradados de color; una tarjeta tonal con
+   filo bronce a la izquierda, como una etiqueta de programa. */
 .banner {
-  background: linear-gradient(135deg, #14532d, #166534);
-  color: #ecfdf5;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  color: var(--text);
   border-radius: var(--radius);
   padding: 14px 16px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 
-@media (prefers-color-scheme: light) {
-  .banner {
-    background: linear-gradient(135deg, #bbf7d0, #86efac);
-    color: #052e16;
-  }
+.banner strong {
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.82rem;
+  color: var(--accent);
 }
 
 .top-bar {
   position: sticky;
   top: 0;
   z-index: 5;
-  background: var(--bg);
-  padding: 16px 16px 4px;
+  background: color-mix(in srgb, var(--bg) 94%, transparent);
+  backdrop-filter: blur(12px);
+  padding: 18px 16px 8px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -329,56 +385,62 @@ nav.tabbar .icon {
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: center;
-  gap: 4px 14px;
-  padding: 14px 16px;
-  border-radius: 14px;
+  gap: 10px 14px;
+  padding: 16px 18px;
+  border-radius: var(--radius);
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   margin-bottom: 14px;
 }
 
 .score-card.tier-perfect {
-  border-color: #facc15;
-  background: color-mix(in srgb, #facc15 12%, var(--bg-elevated));
+  border-color: color-mix(in srgb, var(--accent) 65%, var(--border));
+  background: color-mix(in srgb, var(--accent) 8%, var(--bg-elevated));
 }
 
-.score-card.tier-great {
-  border-color: var(--accent);
+.score-icon {
+  display: flex;
+  align-items: center;
+  color: var(--text-muted);
 }
 
-.score-emoji {
-  font-size: 1.8rem;
-  grid-row: span 1;
+.tier-perfect .score-icon,
+.tier-great .score-icon {
+  color: var(--accent);
 }
 
 .score-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
+}
+
+.score-info strong {
+  font-weight: 600;
+  letter-spacing: 0.02em;
 }
 
 .score-info span {
-  font-size: 0.82rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
   color: var(--text-muted);
 }
 
 .score-progress {
   grid-column: 1 / -1;
-  height: 6px;
-  border-radius: 3px;
+  height: 3px;
+  border-radius: 2px;
   background: var(--border);
   overflow: hidden;
 }
 
 .score-progress-fill {
   height: 100%;
-  border-radius: 3px;
+  border-radius: 2px;
   background: var(--accent);
   transition: width 0.3s ease;
-}
-
-.tier-perfect .score-progress-fill {
-  background: #facc15;
 }
 
 .day-picker {
@@ -391,20 +453,21 @@ nav.tabbar .icon {
   flex: 1;
   min-height: 40px;
   padding: 0;
-  border-radius: 10px;
-  font-weight: 700;
-  font-size: 0.85rem;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
   color: var(--text-muted);
 }
 
 .day-chip.on {
   background: var(--accent);
   border-color: var(--accent);
-  color: #052e16;
+  color: var(--accent-ink);
 }
 
 .habit-manage-row {
-  padding: 12px 0;
+  padding: 14px 0;
   border-bottom: 1px solid var(--border);
 }
 
