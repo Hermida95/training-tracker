@@ -110,6 +110,10 @@ export default function Progress() {
               Pausas activas: {stats.breaks_done}/{stats.breaks_total}
             </p>
             <p>Cumplimiento de hábitos: {Math.round(stats.habit_completion_rate * 100)}%</p>
+            <p>
+              Puntos del mes: <strong>{stats.points_total}</strong> · {stats.perfect_days}{" "}
+              {stats.perfect_days === 1 ? "día perfecto" : "días perfectos"} ⭐
+            </p>
 
             <div className="btn-row" style={{ marginTop: 12 }}>
               <a

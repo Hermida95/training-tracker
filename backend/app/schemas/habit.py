@@ -43,6 +43,22 @@ class HabitWithStatus(HabitRead):
     current_streak: int
 
 
+class DayScore(BaseModel):
+    """Puntuación del checklist de un día + racha de días >=75%.
+
+    tier: "perfect" (100%, 3pts) | "great" (>=75%, 2pts) | "half" (>=50%, 1pt)
+          | "missed" (<50%, 0pts) | "rest" (nada programado).
+    """
+
+    date: datetime.date
+    due_count: int
+    done_count: int
+    completion_rate: float | None
+    points: int
+    tier: str
+    streak: int
+
+
 class HabitLogUpsert(BaseModel):
     date: datetime.date
     done: bool = False

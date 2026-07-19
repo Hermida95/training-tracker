@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException
 from app.core.deps import DbSession
 from app.crud import habit as crud
 from app.schemas.habit import (
+    DayScore,
     HabitCreate,
     HabitLogRead,
     HabitLogUpsert,
@@ -12,6 +13,7 @@ from app.schemas.habit import (
     HabitUpdate,
     HabitWithStatus,
 )
+from app.utils.day_score import compute_day_score
 from app.utils.streak import compute_streak
 from app.utils.timezone import today_local
 
@@ -47,6 +49,12 @@ def habits_today(db: DbSession, date: datetime.date | None = None):
             )
         )
     return result
+
+
+@router.get("/score", response_model=DayScore)
+def day_score(db: DbSession, date: datetime.date | None = None):
+    """Puntos del día (100%=3, >=75%=2, >=50%=1) y racha de días >=75%."""
+    return compute_day_score(db, date or today_local())
 
 
 @router.get("/{habit_id}", response_model=HabitRead)

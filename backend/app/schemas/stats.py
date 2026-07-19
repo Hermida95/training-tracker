@@ -19,6 +19,8 @@ class MonthlyStats(BaseModel):
     breaks_done: int
     breaks_total: int
     habit_completion_rate: float
+    points_total: int
+    perfect_days: int
 
 
 class ExportPayload(BaseModel):

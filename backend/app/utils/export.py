@@ -84,6 +84,7 @@ def render_as_text(payload: ExportPayload) -> str:
         f"(tendencia {s.waist_trend_cm or 0:+}cm)",
         f"Pausas activas: {s.breaks_done}/{s.breaks_total} hechas",
         f"Cumplimiento de hábitos: {s.habit_completion_rate * 100:.0f}%",
+        f"Puntos del mes: {s.points_total} ({s.perfect_days} días perfectos ⭐)",
         "",
         "ENTRENOS:",
     ]

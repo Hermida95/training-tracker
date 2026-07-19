@@ -2,8 +2,18 @@ import { useEffect, useState } from "react";
 import { habitsApi } from "../api/habits";
 import { workoutsApi } from "../api/workouts";
 import { Stepper } from "../components/Stepper";
-import type { HabitWithStatus, PeriodizationInfo } from "../types";
+import type { DayScore, DayScoreTier, HabitWithStatus, PeriodizationInfo } from "../types";
 import { todayIsoMadrid as todayIso } from "../utils/date";
+
+// Texto y emoji por nivel de puntuación del día. El "plus" grande es el día
+// perfecto (100% -> 3 pts); un día decente (>=75%) mantiene la racha viva.
+const TIER_DISPLAY: Record<DayScoreTier, { emoji: string; label: string }> = {
+  perfect: { emoji: "⭐", label: "¡Día perfecto! +3 pts" },
+  great: { emoji: "💪", label: "Buen día · +2 pts" },
+  half: { emoji: "🌗", label: "A medias · +1 pt" },
+  missed: { emoji: "▫️", label: "Aún sin puntos hoy" },
+  rest: { emoji: "🌤️", label: "Día libre" },
+};
 
 // Paso del stepper proporcional al objetivo del hábito, para que registrar
 // sea rápido con cualquier escala: 2L de agua -> 0.25, 60 min de estudio -> 5,
@@ -20,13 +30,19 @@ function stepFor(habit: HabitWithStatus): number {
 export default function Today() {
   const [habits, setHabits] = useState<HabitWithStatus[]>([]);
   const [periodization, setPeriodization] = useState<PeriodizationInfo | null>(null);
+  const [score, setScore] = useState<DayScore | null>(null);
   const [loading, setLoading] = useState(true);
 
   const load = () => {
-    Promise.all([habitsApi.today(todayIso()), workoutsApi.periodization(todayIso())])
-      .then(([h, p]) => {
+    Promise.all([
+      habitsApi.today(todayIso()),
+      workoutsApi.periodization(todayIso()),
+      habitsApi.score(todayIso()),
+    ])
+      .then(([h, p, s]) => {
         setHabits(h);
         setPeriodization(p);
+        setScore(s);
       })
       .finally(() => setLoading(false));
   };
@@ -61,6 +77,33 @@ export default function Today() {
             <p style={{ color: "inherit", opacity: 0.85, margin: "4px 0 0" }}>
               {periodization.description}
             </p>
+          </div>
+        )}
+
+        {score && score.tier !== "rest" && (
+          <div className={`score-card tier-${score.tier}`}>
+            <span className="score-emoji">{TIER_DISPLAY[score.tier].emoji}</span>
+            <div className="score-info">
+              <strong>{TIER_DISPLAY[score.tier].label}</strong>
+              <span>
+                🔥 Racha: {score.streak} {score.streak === 1 ? "día" : "días"}
+                {score.tier !== "perfect" &&
+                  score.due_count > 0 &&
+                  ` · ${score.done_count}/${score.due_count} para el ⭐`}
+              </span>
+            </div>
+            <div
+              className="score-progress"
+              role="progressbar"
+              aria-valuenow={Math.round((score.completion_rate ?? 0) * 100)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div
+                className="score-progress-fill"
+                style={{ width: `${(score.completion_rate ?? 0) * 100}%` }}
+              />
+            </div>
           </div>
         )}
 

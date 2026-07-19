@@ -23,6 +23,18 @@ export interface HabitWithStatus extends Habit {
   current_streak: number;
 }
 
+export type DayScoreTier = "perfect" | "great" | "half" | "missed" | "rest";
+
+export interface DayScore {
+  date: string;
+  due_count: number;
+  done_count: number;
+  completion_rate: number | null;
+  points: number;
+  tier: DayScoreTier;
+  streak: number; // días consecutivos con >=75% del checklist
+}
+
 export interface HabitLog {
   id: number;
   habit_id: number;
@@ -145,4 +157,6 @@ export interface MonthlyStats {
   breaks_done: number;
   breaks_total: number;
   habit_completion_rate: number;
+  points_total: number;
+  perfect_days: number;
 }

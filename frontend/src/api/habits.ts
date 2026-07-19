@@ -1,5 +1,5 @@
 import { api } from "./client";
-import type { Habit, HabitLog, HabitValueType, HabitWithStatus } from "../types";
+import type { DayScore, Habit, HabitLog, HabitValueType, HabitWithStatus } from "../types";
 
 export interface HabitCreatePayload {
   key: string;
@@ -14,6 +14,7 @@ export interface HabitCreatePayload {
 export const habitsApi = {
   today: (date?: string) =>
     api.get<HabitWithStatus[]>(`/habits/today${date ? `?date=${date}` : ""}`),
+  score: (date?: string) => api.get<DayScore>(`/habits/score${date ? `?date=${date}` : ""}`),
   list: () => api.get<Habit[]>("/habits"),
   create: (payload: HabitCreatePayload) => api.post<Habit>("/habits", payload),
   update: (habitId: number, patch: Partial<Pick<Habit, "name" | "target_value" | "unit" | "active_days" | "sort_order">>) =>

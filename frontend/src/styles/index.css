@@ -325,6 +325,62 @@ nav.tabbar .icon {
   color: var(--text-muted);
 }
 
+.score-card {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: 4px 14px;
+  padding: 14px 16px;
+  border-radius: 14px;
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  margin-bottom: 14px;
+}
+
+.score-card.tier-perfect {
+  border-color: #facc15;
+  background: color-mix(in srgb, #facc15 12%, var(--bg-elevated));
+}
+
+.score-card.tier-great {
+  border-color: var(--accent);
+}
+
+.score-emoji {
+  font-size: 1.8rem;
+  grid-row: span 1;
+}
+
+.score-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.score-info span {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+}
+
+.score-progress {
+  grid-column: 1 / -1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border);
+  overflow: hidden;
+}
+
+.score-progress-fill {
+  height: 100%;
+  border-radius: 3px;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.tier-perfect .score-progress-fill {
+  background: #facc15;
+}
+
 .day-picker {
   display: flex;
   gap: 6px;

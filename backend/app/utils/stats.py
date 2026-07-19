@@ -8,7 +8,9 @@ from app.crud import break_event as break_crud
 from app.crud import habit as habit_crud
 from app.crud import workout as workout_crud
 from app.models.break_event import BreakStatus
+from app.models.habit import HabitLog
 from app.schemas.stats import MonthlyStats
+from app.utils.day_score import day_completion, points_for_rate
 from app.utils.seed_keys import STEPS_KEY
 
 
@@ -52,21 +54,23 @@ def compute_monthly_stats(db: Session, year: int, month: int) -> MonthlyStats:
 
     all_habits = habit_crud.list_habits(db)
     all_logs = habit_crud.list_all_logs_in_range(db, start, end)
-    logs_by_habit: dict[int, list] = {}
+    logs_by_day: dict[datetime.date, dict[int, HabitLog]] = {}
     for log in all_logs:
-        logs_by_habit.setdefault(log.habit_id, []).append(log)
+        logs_by_day.setdefault(log.date, {})[log.habit_id] = log
 
     due_count = 0
     done_count = 0
+    points_total = 0
+    perfect_days = 0
     day = start
     while day <= end:
-        for habit in all_habits:
-            if habit.is_due_on(day):
-                due_count += 1
-                day_logs = logs_by_habit.get(habit.id, [])
-                log = next((lg for lg in day_logs if lg.date == day), None)
-                if log and log.done:
-                    done_count += 1
+        day_due, day_done, day_rate = day_completion(all_habits, logs_by_day, day)
+        due_count += day_due
+        done_count += day_done
+        points, tier = points_for_rate(day_rate)
+        points_total += points
+        if tier == "perfect":
+            perfect_days += 1
         day += datetime.timedelta(days=1)
 
     return MonthlyStats(
@@ -89,4 +93,6 @@ def compute_monthly_stats(db: Session, year: int, month: int) -> MonthlyStats:
         breaks_done=breaks_done,
         breaks_total=len(breaks),
         habit_completion_rate=round(done_count / due_count, 3) if due_count else 0.0,
+        points_total=points_total,
+        perfect_days=perfect_days,
     )
