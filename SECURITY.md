@@ -47,14 +47,16 @@ y qué riesgos quedan aceptados a sabiendas.
 - **Sin revocación de tokens**: cerrar sesión solo borra el token del cliente;
   un token robado vale hasta su expiración (30 días). Aceptable en app personal.
   Si preocupa: acortar expiración o añadir una lista de revocados.
-- **Sin verificación de email ni recuperación de contraseña**: no hay envío de
-  emails (mantenerlo gratis y simple). Una contraseña olvidada requiere tocar la
-  BD a mano. Primer candidato si la app crece.
+- **Sin verificación de email**: no hay envío de emails (mantenerlo gratis y
+  sin servicios externos). La recuperación de contraseña se resuelve con un
+  **código de recuperación de un solo uso** (hash bcrypt en BD, se muestra una
+  única vez al generarlo en Ajustes) — sin código y sin contraseña, toca BD a mano.
 - **Sin bloqueo de cuenta**: el rate limit por IP frena la fuerza bruta online,
   pero no hay lockout por cuenta. Con contraseñas de 8+ y bcrypt, riesgo bajo.
-- **Registro abierto**: cualquiera con la URL puede crearse una cuenta. Es el
-  comportamiento deseado ("compartirla con gente"), pero cada cuenta consume BD.
-  Si aparece abuso: código de invitación en el registro (cambio de ~20 líneas).
+- **Registro por invitación**: cerrado al público. Solo se entra con un código
+  de un solo uso generado por un usuario existente (máx. 5 pendientes por
+  usuario); la única excepción es la primera cuenta de una instancia vacía,
+  que pertenece al dueño del despliegue.
 
 ## Checklist antes de cada despliegue
 

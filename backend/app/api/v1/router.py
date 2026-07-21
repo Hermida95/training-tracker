@@ -6,6 +6,7 @@ from app.api.v1.endpoints import (
     breaks,
     export,
     habits,
+    invites,
     menu,
     stats,
     workouts,
@@ -13,6 +14,7 @@ from app.api.v1.endpoints import (
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(auth.router)
+api_router.include_router(invites.router)
 api_router.include_router(menu.router)
 api_router.include_router(habits.router)
 api_router.include_router(workouts.router)

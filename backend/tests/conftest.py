@@ -31,9 +31,24 @@ def db_session():
         Base.metadata.drop_all(bind=engine)
 
 
-def register_user(client: TestClient, email: str = "test@example.com") -> dict[str, str]:
-    """Registra un usuario y devuelve los headers de Authorization listos para usar."""
-    res = client.post("/api/v1/auth/register", json={"email": email, "password": "secreta1234"})
+def register_user(
+    client: TestClient,
+    email: str = "test@example.com",
+    invited_by: dict[str, str] | None = None,
+) -> dict[str, str]:
+    """Registra un usuario y devuelve los headers de Authorization listos.
+
+    El registro está cerrado por invitación: el PRIMER usuario de la BD entra
+    libre, pero los siguientes necesitan un código. Pasa en `invited_by` los
+    headers de un usuario existente y el helper genera la invitación por API.
+    """
+    payload: dict[str, str] = {"email": email, "password": "secreta1234"}
+    if invited_by is not None:
+        invite = client.post("/api/v1/invites", headers=invited_by)
+        assert invite.status_code == 201, invite.text
+        payload["invite_code"] = invite.json()["code"]
+
+    res = client.post("/api/v1/auth/register", json=payload)
     assert res.status_code == 201, res.text
     return {"Authorization": f"Bearer {res.json()['access_token']}"}
 

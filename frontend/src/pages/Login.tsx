@@ -3,28 +3,55 @@ import type { FormEvent } from "react";
 import { BarbellIcon } from "../components/icons";
 import { useAuth } from "../auth/AuthContext";
 
-type Mode = "login" | "register";
+type Mode = "login" | "register" | "reset";
+
+const TITLES: Record<Mode, string> = {
+  login: "Entrar",
+  register: "Crear cuenta",
+  reset: "Recuperar contraseña",
+};
 
 export default function Login() {
-  const { login, register } = useAuth();
+  const { login, register, resetPassword } = useAuth();
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [inviteCode, setInviteCode] = useState("");
+  const [recoveryCode, setRecoveryCode] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const switchMode = (next: Mode) => {
+    setMode(next);
+    setError(null);
+    setPassword("");
+  };
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      if (mode === "login") await login(email, password);
-      else await register(email, password);
+      if (mode === "login") {
+        await login(email, password);
+      } else if (mode === "register") {
+        await register(email, password, inviteCode.trim() || null);
+      } else {
+        await resetPassword(email, recoveryCode, password);
+      }
     } catch (err) {
       const raw = err instanceof Error ? err.message : "";
-      if (raw.includes("409")) setError("Ya existe una cuenta con ese email.");
-      else if (mode === "login") setError("Email o contraseña incorrectos.");
-      else setError("No se pudo crear la cuenta. La contraseña necesita 8+ caracteres.");
+      if (mode === "register" && raw.includes("409")) {
+        setError("Ya existe una cuenta con ese email.");
+      } else if (mode === "register" && raw.includes("403")) {
+        setError("Código de invitación no válido. Pídeselo a quien te invitó.");
+      } else if (mode === "register") {
+        setError("No se pudo crear la cuenta. La contraseña necesita 8+ caracteres.");
+      } else if (mode === "reset") {
+        setError("Email o código de recuperación incorrectos.");
+      } else {
+        setError("Email o contraseña incorrectos.");
+      }
     } finally {
       setBusy(false);
     }
@@ -41,7 +68,7 @@ export default function Login() {
       </div>
 
       <form className="card login-card" onSubmit={submit}>
-        <h2>{mode === "login" ? "Entrar" : "Crear cuenta"}</h2>
+        <h2>{TITLES[mode]}</h2>
 
         <label htmlFor="email">Email</label>
         <input
@@ -53,8 +80,41 @@ export default function Login() {
           onChange={(e) => setEmail(e.target.value)}
         />
 
+        {mode === "register" && (
+          <>
+            <label htmlFor="invite" style={{ marginTop: 12, display: "block" }}>
+              Código de invitación
+            </label>
+            <input
+              id="invite"
+              type="text"
+              placeholder="XXXX-XXXX"
+              autoComplete="off"
+              value={inviteCode}
+              onChange={(e) => setInviteCode(e.target.value)}
+            />
+          </>
+        )}
+
+        {mode === "reset" && (
+          <>
+            <label htmlFor="recovery" style={{ marginTop: 12, display: "block" }}>
+              Código de recuperación
+            </label>
+            <input
+              id="recovery"
+              type="text"
+              placeholder="XXXX-XXXX-XXXX"
+              autoComplete="off"
+              required
+              value={recoveryCode}
+              onChange={(e) => setRecoveryCode(e.target.value)}
+            />
+          </>
+        )}
+
         <label htmlFor="password" style={{ marginTop: 12, display: "block" }}>
-          Contraseña
+          {mode === "reset" ? "Nueva contraseña" : "Contraseña"}
         </label>
         <input
           id="password"
@@ -69,19 +129,31 @@ export default function Login() {
         {error && <p className="login-error">{error}</p>}
 
         <button className="primary big" type="submit" disabled={busy} style={{ marginTop: 16 }}>
-          {busy ? "Un momento…" : mode === "login" ? "Entrar" : "Crear cuenta"}
+          {busy ? "Un momento…" : TITLES[mode]}
         </button>
 
-        <button
-          type="button"
-          className="ghost login-switch"
-          onClick={() => {
-            setMode(mode === "login" ? "register" : "login");
-            setError(null);
-          }}
-        >
-          {mode === "login" ? "¿Primera vez? Crea tu cuenta" : "¿Ya tienes cuenta? Entra"}
-        </button>
+        {mode === "login" ? (
+          <>
+            <button
+              type="button"
+              className="ghost login-switch"
+              onClick={() => switchMode("register")}
+            >
+              ¿Tienes una invitación? Crea tu cuenta
+            </button>
+            <button
+              type="button"
+              className="ghost login-switch"
+              onClick={() => switchMode("reset")}
+            >
+              ¿Olvidaste la contraseña?
+            </button>
+          </>
+        ) : (
+          <button type="button" className="ghost login-switch" onClick={() => switchMode("login")}>
+            ¿Ya tienes cuenta? Entra
+          </button>
+        )}
       </form>
     </div>
   );

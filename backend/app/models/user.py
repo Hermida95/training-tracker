@@ -11,6 +11,13 @@ class User(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     email: Mapped[str] = mapped_column(unique=True, index=True)
     password_hash: Mapped[str]
+    # Hash bcrypt del código de recuperación (un solo uso). None = el usuario
+    # no ha generado ninguno; si olvida la contraseña sin él, toca BD a mano.
+    recovery_code_hash: Mapped[str | None] = mapped_column(default=None)
     created_at: Mapped[datetime.datetime] = mapped_column(
         default=lambda: datetime.datetime.now(datetime.UTC)
     )
+
+    @property
+    def has_recovery_code(self) -> bool:
+        return self.recovery_code_hash is not None

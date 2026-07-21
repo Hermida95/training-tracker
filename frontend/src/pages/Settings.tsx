@@ -1,12 +1,21 @@
 import { useEffect, useState } from "react";
+import { authApi } from "../api/auth";
 import { breaksApi } from "../api/breaks";
 import { useAuth } from "../auth/AuthContext";
 import { HabitManager } from "../components/HabitManager";
+import { InviteManager } from "../components/InviteManager";
 import { pushBreakConfigToServiceWorker } from "../hooks/useNotificationScheduler";
 import type { BreakConfig } from "../types";
 
 export default function Settings() {
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser } = useAuth();
+  const [recoveryCode, setRecoveryCode] = useState<string | null>(null);
+
+  const generateRecovery = async () => {
+    const res = await authApi.generateRecoveryCode();
+    setRecoveryCode(res.recovery_code);
+    await refreshUser();
+  };
   const [config, setConfig] = useState<BreakConfig | null>(null);
   const [permission, setPermission] = useState<NotificationPermission>(
     "Notification" in window ? Notification.permission : "denied"
@@ -98,11 +107,35 @@ export default function Settings() {
           </p>
         </div>
 
+        <InviteManager />
+
         <div className="card">
           <h2>Cuenta</h2>
           <p>
             Sesión iniciada como <strong>{user?.email}</strong>
           </p>
+
+          <h2 style={{ marginTop: 16 }}>Recuperación de contraseña</h2>
+          {recoveryCode ? (
+            <div className="recovery-reveal">
+              <code className="invite-code">{recoveryCode}</code>
+              <p style={{ marginTop: 8, fontSize: "0.82rem" }}>
+                Guárdalo ahora (gestor de contraseñas, nota segura…): <strong>no se volverá a
+                mostrar</strong>. Si olvidas la contraseña, lo usarás junto a tu email para poner
+                una nueva. Es de un solo uso.
+              </p>
+            </div>
+          ) : (
+            <p style={{ fontSize: "0.82rem" }}>
+              {user?.has_recovery_code
+                ? "Tienes un código de recuperación activo. Generar uno nuevo invalida el anterior."
+                : "Sin código de recuperación: si olvidas la contraseña no podrás recuperar la cuenta. Genera uno y guárdalo a buen recaudo."}
+            </p>
+          )}
+          <button style={{ width: "100%", marginBottom: 8 }} onClick={generateRecovery}>
+            {user?.has_recovery_code ? "Regenerar código" : "Generar código de recuperación"}
+          </button>
+
           <button className="danger" style={{ width: "100%" }} onClick={logout}>
             Cerrar sesión
           </button>

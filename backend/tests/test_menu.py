@@ -66,7 +66,7 @@ def test_menu_is_private_per_user(client, anon_client):
         "/api/v1/menu", data={"title": "Mi menú", "text_content": "secreto"}
     ).json()
 
-    headers_b = register_user(anon_client, "fisgona@example.com")
+    headers_b = register_user(anon_client, "fisgona@example.com", invited_by=client.headers)
     assert anon_client.get("/api/v1/menu", headers=headers_b).json() == []
     assert (
         anon_client.get(f"/api/v1/menu/{created['id']}/file", headers=headers_b).status_code == 404

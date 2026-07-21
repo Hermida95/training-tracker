@@ -6,6 +6,14 @@ export interface User {
   id: number;
   email: string;
   created_at: string;
+  has_recovery_code: boolean;
+}
+
+export interface InviteCode {
+  id: number;
+  code: string;
+  created_at: string;
+  used_at: string | null;
 }
 
 export interface TokenResponse {

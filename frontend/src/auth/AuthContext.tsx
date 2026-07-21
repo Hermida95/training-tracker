@@ -8,7 +8,9 @@ interface AuthState {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, inviteCode: string | null) => Promise<void>;
+  resetPassword: (email: string, recoveryCode: string, newPassword: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
   logout: () => void;
 }
 
@@ -38,10 +40,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(res.user);
   };
 
-  const register = async (email: string, password: string) => {
-    const res = await authApi.register(email, password);
+  const register = async (email: string, password: string, inviteCode: string | null) => {
+    const res = await authApi.register(email, password, inviteCode);
     setToken(res.access_token);
     setUser(res.user);
+  };
+
+  const resetPassword = async (email: string, recoveryCode: string, newPassword: string) => {
+    const res = await authApi.resetPassword(email, recoveryCode, newPassword);
+    setToken(res.access_token);
+    setUser(res.user);
+  };
+
+  // Para refrescar flags del usuario (ej. has_recovery_code tras generarlo).
+  const refreshUser = async () => {
+    setUser(await authApi.me());
   };
 
   const logout = () => {
@@ -50,7 +63,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout }}>
+    <AuthContext.Provider
+      value={{ user, loading, login, register, resetPassword, refreshUser, logout }}
+    >
       {children}
     </AuthContext.Provider>
   );

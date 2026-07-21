@@ -56,7 +56,7 @@ def test_endpoints_require_auth(anon_client):
 
 def test_users_cannot_see_each_others_data(anon_client):
     headers_a = register_user(anon_client, "a@example.com")
-    headers_b = register_user(anon_client, "b@example.com")
+    headers_b = register_user(anon_client, "b@example.com", invited_by=headers_a)
 
     # A crea un hábito personalizado y una sesión de entreno
     habit = anon_client.post(

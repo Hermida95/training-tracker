@@ -499,6 +499,44 @@ input[type="file"] {
   font-size: 0.85rem;
 }
 
+.invite-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.invite-row:last-of-type {
+  border-bottom: none;
+}
+
+.invite-code {
+  font-family: ui-monospace, "SF Mono", Menlo, monospace;
+  font-size: 1rem;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.invite-code.used {
+  color: var(--text-muted);
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}
+
+.recovery-reveal {
+  border: 1px solid color-mix(in srgb, var(--accent) 60%, var(--border));
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-bottom: 10px;
+  background: color-mix(in srgb, var(--accent) 7%, var(--bg-elevated));
+}
+
 .login-screen {
   min-height: 100%;
   display: flex;
