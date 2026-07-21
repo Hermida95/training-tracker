@@ -24,7 +24,9 @@ docker compose up --build
 
 - Front: http://localhost:5173
 - API: http://localhost:8000 · docs autogeneradas en http://localhost:8000/docs (Swagger) y `/redoc`
-- La API aplica migraciones (`alembic upgrade head`) y siembra la rutina/hábitos en cada arranque del contenedor (`app/seed/seed_data.py`, idempotente).
+- La API aplica migraciones (`alembic upgrade head`) en cada arranque del contenedor.
+- La primera pantalla es el login: crea tu cuenta y arrancarás con la rutina GYM 1/2/3 y los
+  hábitos base ya sembrados (la siembra es por usuario, en el registro).
 
 Sin Docker, cada servicio arranca suelto:
 
@@ -33,7 +35,6 @@ Sin Docker, cada servicio arranca suelto:
 cd backend && python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt -r requirements-dev.txt
 DATABASE_URL=sqlite:///./local.db alembic upgrade head
-DATABASE_URL=sqlite:///./local.db python -m app.seed.seed_data
 DATABASE_URL=sqlite:///./local.db uvicorn app.main:app --reload
 
 # frontend
@@ -53,11 +54,14 @@ CI (`.github/workflows/ci.yml`) corre exactamente estos comandos en cada push/PR
 
 ## Decisiones de arquitectura
 
-**Sin autenticación / multiusuario.** Es una app de uso personal (tu propio seguimiento), así
-que no hay tabla `users` ni login. Si en el futuro la compartes con más gente, el punto de
-entrada sería añadir un `user_id` a `habits`, `workout_sessions`, `body_metrics` y `break_events`,
-y un middleware de auth delante de `app/api/v1/router.py`. Se ha dejado fuera a propósito para no
-añadir complejidad que no se pidió.
+**Multiusuario con JWT.** Cada cuenta (email + contraseña) tiene sus propios hábitos, entrenos,
+métricas, pausas y ajustes: todas las tablas de datos llevan `user_id` y cada endpoint filtra por
+el usuario del token. El login es JWT firmado con `SECRET_KEY` (HS256, 30 días de validez, pensado
+para no reloguear en el gym) con la contraseña hasheada con bcrypt. El token viaja en
+`Authorization: Bearer` — también desde el service worker, que lo recibe por `postMessage` porque
+no puede leer el localStorage de la página. Al registrarse, `seed_user()` crea la copia personal
+de la rutina GYM 1/2/3 y los hábitos base, que cada usuario puede editar sin afectar al resto.
+En producción, `SECRET_KEY` debe venir de Secret Manager (ver sección de despliegue).
 
 **Hábitos como filas genéricas, no una tabla por hábito.** `Habit` tiene `value_type`
 (`boolean`/`numeric`) y `active_days` (qué días de la semana aplica). Esto permite modelar tanto

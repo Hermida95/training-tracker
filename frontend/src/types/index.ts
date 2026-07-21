@@ -2,6 +2,18 @@
 // Se mantienen a mano en vez de generarlos porque el proyecto es pequeño;
 // si creciera, valdría la pena generar esto desde /openapi.json.
 
+export interface User {
+  id: number;
+  email: string;
+  created_at: string;
+}
+
+export interface TokenResponse {
+  access_token: string;
+  token_type: string;
+  user: User;
+}
+
 export type HabitValueType = "boolean" | "numeric";
 
 export interface Habit {

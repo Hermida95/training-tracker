@@ -1,6 +1,20 @@
 export const API_BASE_URL: string =
   import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api/v1";
 
+const TOKEN_KEY = "tt_token";
+
+export function getToken(): string | null {
+  return localStorage.getItem(TOKEN_KEY);
+}
+
+export function setToken(token: string): void {
+  localStorage.setItem(TOKEN_KEY, token);
+}
+
+export function clearToken(): void {
+  localStorage.removeItem(TOKEN_KEY);
+}
+
 class ApiError extends Error {
   constructor(
     public status: number,
@@ -11,10 +25,19 @@ class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_BASE_URL}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...init,
-  });
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  const token = getToken();
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  const res = await fetch(`${API_BASE_URL}${path}`, { headers, ...init });
+
+  if (res.status === 401 && !path.startsWith("/auth/")) {
+    // Token expirado o inválido: se limpia la sesión y se vuelve al login.
+    clearToken();
+    if (!window.location.pathname.startsWith("/login")) {
+      window.location.assign("/login");
+    }
+  }
   if (!res.ok) {
     const body = await res.text().catch(() => "");
     throw new ApiError(res.status, body || res.statusText);

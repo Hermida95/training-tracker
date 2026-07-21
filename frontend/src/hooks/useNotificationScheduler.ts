@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { API_BASE_URL } from "../api/client";
+import { API_BASE_URL, getToken } from "../api/client";
 import { breaksApi } from "../api/breaks";
 import { computeNextBreakTime } from "../notifications/scheduleMath";
 import type { BreakConfig } from "../types";
@@ -34,7 +34,12 @@ export function useNotificationScheduler(enabled: boolean) {
       const config = await breaksApi.getConfig();
       if (cancelled) return;
 
-      registration.active?.postMessage({ type: "INIT", apiBase: API_BASE_URL, config });
+      registration.active?.postMessage({
+        type: "INIT",
+        apiBase: API_BASE_URL,
+        token: getToken(),
+        config,
+      });
 
       const supportsTrigger = "showTrigger" in Notification.prototype;
       if (!supportsTrigger) {
@@ -76,5 +81,10 @@ export function useNotificationScheduler(enabled: boolean) {
 export async function pushBreakConfigToServiceWorker(config: BreakConfig) {
   if (!("serviceWorker" in navigator)) return;
   const registration = await navigator.serviceWorker.ready;
-  registration.active?.postMessage({ type: "RESCHEDULE", apiBase: API_BASE_URL, config });
+  registration.active?.postMessage({
+    type: "RESCHEDULE",
+    apiBase: API_BASE_URL,
+    token: getToken(),
+    config,
+  });
 }

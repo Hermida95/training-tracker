@@ -36,3 +36,31 @@ resource "google_secret_manager_secret_version" "database_url" {
   secret      = google_secret_manager_secret.database_url.id
   secret_data = local.database_url
 }
+
+# -----------------------------------------------------------------------------
+# SECRET_KEY: la clave con la que la API firma los JWT de login. Quien la
+# conozca puede fabricar tokens válidos para cualquier usuario, así que va a
+# Secret Manager igual que DATABASE_URL. La genera Terraform una vez
+# (random_password) y queda guardada en el state — otro motivo para tratar el
+# state como sensible (ver README).
+# -----------------------------------------------------------------------------
+resource "random_password" "jwt_secret" {
+  length  = 64
+  special = false # solo alfanumérico: evita problemas de escapado y es igual de fuerte a esta longitud
+}
+
+resource "google_secret_manager_secret" "jwt_secret" {
+  project   = var.project_id
+  secret_id = "${var.app_name}-jwt-secret"
+
+  replication {
+    auto {}
+  }
+
+  depends_on = [google_project_service.apis]
+}
+
+resource "google_secret_manager_secret_version" "jwt_secret" {
+  secret      = google_secret_manager_secret.jwt_secret.id
+  secret_data = random_password.jwt_secret.result
+}

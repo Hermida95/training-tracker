@@ -9,11 +9,11 @@ from app.schemas.stats import ExportPayload
 from app.utils.stats import compute_monthly_stats, month_bounds
 
 
-def build_export_payload(db: Session, year: int, month: int) -> ExportPayload:
+def build_export_payload(db: Session, user_id: int, year: int, month: int) -> ExportPayload:
     start, end = month_bounds(year, month)
-    stats = compute_monthly_stats(db, year, month)
+    stats = compute_monthly_stats(db, user_id, year, month)
 
-    sessions = workout_crud.list_sessions(db, start=start, end=end)
+    sessions = workout_crud.list_sessions(db, user_id, start=start, end=end)
     workouts_dump = [
         {
             "date": s.date.isoformat(),
@@ -42,7 +42,7 @@ def build_export_payload(db: Session, year: int, month: int) -> ExportPayload:
     ]
 
     habits_dump = []
-    for habit in habit_crud.list_habits(db):
+    for habit in habit_crud.list_habits(db, user_id):
         logs = habit_crud.list_logs_in_range(db, habit.id, start, end)
         habits_dump.append(
             {
@@ -56,7 +56,7 @@ def build_export_payload(db: Session, year: int, month: int) -> ExportPayload:
 
     metrics_dump = [
         {"date": m.date.isoformat(), "weight_kg": m.weight_kg, "waist_cm": m.waist_cm}
-        for m in body_metric_crud.list_metrics(db, start, end)
+        for m in body_metric_crud.list_metrics(db, user_id, start, end)
     ]
 
     return ExportPayload(

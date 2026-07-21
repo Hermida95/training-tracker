@@ -1,12 +1,13 @@
-"""Siembra la BD con la rutina precargada y los hábitos diarios del spec.
+"""Rutina precargada y hábitos por defecto que recibe cada usuario nuevo.
 
-Idempotente: se puede ejecutar en cada arranque del contenedor (ver
-docker-compose.yml) sin duplicar filas, comprobando primero si ya existen.
-
-Uso: python -m app.seed.seed_data
+Con multiusuario, la siembra dejó de ser global: `seed_user(db, user_id)` se
+ejecuta una vez en el registro (ver app.api.v1.endpoints.auth) y crea la copia
+personal de hábitos y plantillas de ejercicios, que el usuario puede luego
+editar sin afectar a nadie más.
 """
 
-from app.core.database import Base, SessionLocal, engine
+from sqlalchemy.orm import Session
+
 from app.models.habit import Habit, HabitValueType
 from app.models.workout import ExerciseTemplate, WorkoutType
 from app.utils.seed_keys import (
@@ -99,28 +100,10 @@ EXERCISE_TEMPLATES = [
 ]
 
 
-def seed(db) -> None:
-    if db.query(Habit).count() == 0:
-        for h in HABITS:
-            db.add(Habit(**h))
-        print(f"Seed: {len(HABITS)} hábitos creados")
-
-    if db.query(ExerciseTemplate).count() == 0:
-        for t in EXERCISE_TEMPLATES:
-            db.add(ExerciseTemplate(**t))
-        print(f"Seed: {len(EXERCISE_TEMPLATES)} ejercicios de plantilla creados")
-
+def seed_user(db: Session, user_id: int) -> None:
+    """Crea los hábitos y la rutina de plantilla para un usuario recién registrado."""
+    for h in HABITS:
+        db.add(Habit(**h, user_id=user_id))
+    for t in EXERCISE_TEMPLATES:
+        db.add(ExerciseTemplate(**t, user_id=user_id))
     db.commit()
-
-
-def main() -> None:
-    Base.metadata.create_all(bind=engine)  # no-op si Alembic ya corrió las migraciones
-    db = SessionLocal()
-    try:
-        seed(db)
-    finally:
-        db.close()
-
-
-if __name__ == "__main__":
-    main()

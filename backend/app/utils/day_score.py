@@ -60,10 +60,10 @@ def day_completion(
     return len(due), done, done / len(due)
 
 
-def compute_day_score(db: Session, as_of: datetime.date) -> DayScore:
-    habits = habit_crud.list_habits(db)
+def compute_day_score(db: Session, user_id: int, as_of: datetime.date) -> DayScore:
+    habits = habit_crud.list_habits(db, user_id)
     start = as_of - datetime.timedelta(days=_MAX_LOOKBACK_DAYS)
-    logs_by_day = _logs_by_day(habit_crud.list_all_logs_in_range(db, start, as_of))
+    logs_by_day = _logs_by_day(habit_crud.list_all_logs_in_range(db, user_id, start, as_of))
 
     due, done, rate = day_completion(habits, logs_by_day, as_of)
     points, tier = points_for_rate(rate)

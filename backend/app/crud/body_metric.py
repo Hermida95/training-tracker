@@ -8,9 +8,12 @@ from app.schemas.body_metric import BodyMetricUpsert
 
 
 def list_metrics(
-    db: Session, start: datetime.date | None = None, end: datetime.date | None = None
+    db: Session,
+    user_id: int,
+    start: datetime.date | None = None,
+    end: datetime.date | None = None,
 ) -> list[BodyMetric]:
-    stmt = select(BodyMetric).order_by(BodyMetric.date)
+    stmt = select(BodyMetric).where(BodyMetric.user_id == user_id).order_by(BodyMetric.date)
     if start:
         stmt = stmt.where(BodyMetric.date >= start)
     if end:
@@ -18,18 +21,23 @@ def list_metrics(
     return list(db.scalars(stmt))
 
 
-def get_by_date(db: Session, date: datetime.date) -> BodyMetric | None:
-    return db.scalar(select(BodyMetric).where(BodyMetric.date == date))
+def get_by_date(db: Session, user_id: int, date: datetime.date) -> BodyMetric | None:
+    return db.scalar(
+        select(BodyMetric).where(BodyMetric.user_id == user_id, BodyMetric.date == date)
+    )
 
 
-def get_metric(db: Session, metric_id: int) -> BodyMetric | None:
-    return db.get(BodyMetric, metric_id)
+def get_metric(db: Session, user_id: int, metric_id: int) -> BodyMetric | None:
+    metric = db.get(BodyMetric, metric_id)
+    return metric if metric is not None and metric.user_id == user_id else None
 
 
-def upsert_metric(db: Session, data: BodyMetricUpsert) -> BodyMetric:
-    metric = get_by_date(db, data.date)
+def upsert_metric(db: Session, user_id: int, data: BodyMetricUpsert) -> BodyMetric:
+    metric = get_by_date(db, user_id, data.date)
     if metric is None:
-        metric = BodyMetric(date=data.date, weight_kg=data.weight_kg, waist_cm=data.waist_cm)
+        metric = BodyMetric(
+            user_id=user_id, date=data.date, weight_kg=data.weight_kg, waist_cm=data.waist_cm
+        )
         db.add(metric)
     else:
         if data.weight_kg is not None:

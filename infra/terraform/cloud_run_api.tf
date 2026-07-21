@@ -68,6 +68,18 @@ resource "google_cloud_run_v2_service" "api" {
         }
       }
 
+      # SECRET_KEY firma los JWT del login (ver app/core/security.py). Mismo
+      # mecanismo que DATABASE_URL: la app la recibe como env var normal.
+      env {
+        name = "SECRET_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.jwt_secret.secret_id
+            version = "latest"
+          }
+        }
+      }
+
       # Solo si usamos Cloud SQL: monta el volumen especial /cloudsql (ver
       # bloque `volumes` más abajo) para que psycopg pueda abrir el socket
       # Unix que espera la connection string de secrets.tf.
@@ -113,5 +125,6 @@ resource "google_cloud_run_v2_service" "api" {
   depends_on = [
     google_project_service.apis,
     google_secret_manager_secret_version.database_url,
+    google_secret_manager_secret_version.jwt_secret,
   ]
 }

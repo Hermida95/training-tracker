@@ -1,7 +1,7 @@
 import datetime
 import enum
 
-from sqlalchemy import DateTime, Enum
+from sqlalchemy import DateTime, Enum, ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.core.database import Base
@@ -26,6 +26,7 @@ class BreakEvent(Base):
     __tablename__ = "break_events"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     scheduled_for: Mapped[datetime.datetime] = mapped_column(DateTime, index=True)
     status: Mapped[BreakStatus] = mapped_column(
         Enum(BreakStatus, native_enum=False, length=20), default=BreakStatus.PENDING

@@ -40,9 +40,8 @@ EXPOSE 8080
 HEALTHCHECK --interval=30s --timeout=3s --start-period=10s \
     CMD curl -f http://localhost:${PORT}/health || exit 1
 
-# Aplica migraciones y siembra datos antes de arrancar. Alembic es idempotente
-# (upgrade head no hace nada si ya está al día) y el seed comprueba conteos
-# antes de insertar, así que es seguro en cada reinicio del contenedor.
+# Aplica migraciones antes de arrancar. Alembic es idempotente (upgrade head
+# no hace nada si ya está al día). La siembra de datos es por usuario y ocurre
+# en el registro, no en el arranque.
 CMD alembic upgrade head && \
-    python -m app.seed.seed_data && \
     uvicorn app.main:app --host 0.0.0.0 --port ${PORT}

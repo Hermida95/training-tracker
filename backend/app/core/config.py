@@ -13,6 +13,12 @@ class Settings(BaseSettings):
     app_timezone: str = "Europe/Madrid"
     cors_origins: str = "http://localhost:5173"
 
+    # Firma de los JWT. En producción DEBE venir de un secreto (Secret Manager);
+    # el default solo existe para que el arranque local sin .env no explote.
+    secret_key: str = "dev-secret-change-me"
+    # PWA de uso personal: tokens largos para no tener que reloguear en el gym.
+    access_token_days: int = 30
+
     # Defaults de la alarma antisedentarismo. El usuario puede sobreescribirlos
     # en tiempo de ejecución vía /api/v1/settings, pero estos son el punto de partida
     # que se siembra en la tabla `app_settings`.

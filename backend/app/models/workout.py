@@ -26,6 +26,7 @@ class ExerciseTemplate(Base):
     __tablename__ = "exercise_templates"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     workout_type: Mapped[WorkoutType] = mapped_column(Enum(WorkoutType, native_enum=False))
     name: Mapped[str]
     order: Mapped[int] = mapped_column(default=0)
@@ -40,6 +41,7 @@ class WorkoutSession(Base):
     __tablename__ = "workout_sessions"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
     date: Mapped[datetime.date] = mapped_column(Date, index=True)
     workout_type: Mapped[WorkoutType] = mapped_column(Enum(WorkoutType, native_enum=False))
     cycle_week: Mapped[int] = mapped_column(default=1)  # 1-4, ver app.utils.periodization

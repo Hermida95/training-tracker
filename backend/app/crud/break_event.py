@@ -8,9 +8,14 @@ from app.schemas.break_event import BreakEventCreate
 
 
 def list_breaks(
-    db: Session, start: datetime.datetime | None = None, end: datetime.datetime | None = None
+    db: Session,
+    user_id: int,
+    start: datetime.datetime | None = None,
+    end: datetime.datetime | None = None,
 ) -> list[BreakEvent]:
-    stmt = select(BreakEvent).order_by(BreakEvent.scheduled_for)
+    stmt = (
+        select(BreakEvent).where(BreakEvent.user_id == user_id).order_by(BreakEvent.scheduled_for)
+    )
     if start:
         stmt = stmt.where(BreakEvent.scheduled_for >= start)
     if end:
@@ -18,12 +23,13 @@ def list_breaks(
     return list(db.scalars(stmt))
 
 
-def get_break(db: Session, break_id: int) -> BreakEvent | None:
-    return db.get(BreakEvent, break_id)
+def get_break(db: Session, user_id: int, break_id: int) -> BreakEvent | None:
+    event = db.get(BreakEvent, break_id)
+    return event if event is not None and event.user_id == user_id else None
 
 
-def create_break(db: Session, data: BreakEventCreate) -> BreakEvent:
-    event = BreakEvent(scheduled_for=data.scheduled_for)
+def create_break(db: Session, user_id: int, data: BreakEventCreate) -> BreakEvent:
+    event = BreakEvent(user_id=user_id, scheduled_for=data.scheduled_for)
     db.add(event)
     db.commit()
     db.refresh(event)
@@ -44,6 +50,7 @@ def postpone(db: Session, event: BreakEvent, minutes: int = 5) -> BreakEvent:
     event.responded_at = datetime.datetime.now(datetime.UTC)
 
     new_event = BreakEvent(
+        user_id=event.user_id,
         scheduled_for=event.scheduled_for + datetime.timedelta(minutes=minutes),
         postponed_from_id=event.id,
     )

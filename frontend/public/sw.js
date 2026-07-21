@@ -174,7 +174,7 @@ async function scheduleBreaks() {
       body: "Levántate, estira 2 min y vuelve. Objetivo: ~8 pausas hoy.",
       tag: `${TAG_PREFIX}${ts.getTime()}`,
       requireInteraction: true,
-      data: { ts: ts.getTime(), apiBase: config.apiBase },
+      data: { ts: ts.getTime(), apiBase: config.apiBase, token: config.token },
       // eslint-disable-next-line no-undef
       showTrigger: new TimestampTrigger(ts.getTime()),
       actions: [
@@ -199,11 +199,16 @@ self.addEventListener("activate", (event) => {
 
 // La app (main thread) manda la config al arrancar o cuando el usuario la
 // cambia en Ajustes. Es la única forma fiable de que el SW sepa la URL de
-// la API y la ventana horaria, ya que no puede leer `import.meta.env`.
+// la API, el token de sesión y la ventana horaria, ya que no puede leer
+// `import.meta.env` ni el localStorage de la página.
 self.addEventListener("message", (event) => {
   if (event.data?.type === "INIT" || event.data?.type === "RESCHEDULE") {
     event.waitUntil(
-      saveConfig({ ...event.data.config, apiBase: event.data.apiBase }).then(scheduleBreaks)
+      saveConfig({
+        ...event.data.config,
+        apiBase: event.data.apiBase,
+        token: event.data.token,
+      }).then(scheduleBreaks)
     );
   }
 });
@@ -219,23 +224,30 @@ self.addEventListener("periodicsync", (event) => {
 
 self.addEventListener("notificationclick", (event) => {
   const { action, notification } = event;
-  const { ts, apiBase } = notification.data || {};
+  const { ts, apiBase, token } = notification.data || {};
   notification.close();
 
   event.waitUntil(
     (async () => {
-      if (!apiBase) return;
+      if (!apiBase || !token) return;
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      };
       try {
         const created = await fetch(`${apiBase}/breaks`, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers,
           body: JSON.stringify({ scheduled_for: new Date(ts).toISOString() }),
         }).then((r) => r.json());
 
         if (action === "done") {
-          await fetch(`${apiBase}/breaks/${created.id}/done`, { method: "POST" });
+          await fetch(`${apiBase}/breaks/${created.id}/done`, { method: "POST", headers });
         } else if (action === "postpone") {
-          await fetch(`${apiBase}/breaks/${created.id}/postpone?minutes=5`, { method: "POST" });
+          await fetch(`${apiBase}/breaks/${created.id}/postpone?minutes=5`, {
+            method: "POST",
+            headers,
+          });
         } else {
           // Click en el cuerpo (no en un botón de acción): abre/enfoca la app.
           const clientsList = await self.clients.matchAll({ type: "window" });

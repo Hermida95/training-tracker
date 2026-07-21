@@ -18,12 +18,15 @@ class Habit(Base):
     Para hábitos numéricos (ej. pasos, agua) `target_value` marca el objetivo y
     `unit` es solo informativo para la UI ("pasos", "L"). Para hábitos booleanos
     (ej. McGill Big 3) `target_value` es None y el log solo guarda `done`.
+    La `key` identifica el hábito dentro de la cuenta (única por usuario).
     """
 
     __tablename__ = "habits"
+    __table_args__ = (UniqueConstraint("user_id", "key", name="uq_habit_user_key"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    key: Mapped[str] = mapped_column(unique=True, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    key: Mapped[str] = mapped_column(index=True)
     name: Mapped[str]
     value_type: Mapped[HabitValueType] = mapped_column(
         Enum(HabitValueType, native_enum=False, length=20), default=HabitValueType.BOOLEAN

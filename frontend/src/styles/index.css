@@ -443,6 +443,59 @@ nav.tabbar .icon {
   transition: width 0.3s ease;
 }
 
+.login-screen {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 24px 20px 48px;
+}
+
+.login-brand {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.login-brand h1 {
+  margin-bottom: 2px;
+}
+
+.login-brand p {
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.login-logo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 1px solid var(--accent);
+  color: var(--accent);
+  margin-bottom: 14px;
+}
+
+.login-card {
+  padding: 22px;
+}
+
+.login-error {
+  color: var(--danger);
+  font-size: 0.85rem;
+  margin: 10px 0 0;
+}
+
+.login-switch {
+  width: 100%;
+  margin-top: 8px;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
 .day-picker {
   display: flex;
   gap: 6px;

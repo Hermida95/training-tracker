@@ -15,28 +15,35 @@ from app.utils.periodization import compute_cycle_week
 
 
 def list_exercise_templates(
-    db: Session, workout_type: WorkoutType | None = None
+    db: Session, user_id: int, workout_type: WorkoutType | None = None
 ) -> list[ExerciseTemplate]:
-    stmt = select(ExerciseTemplate).order_by(ExerciseTemplate.workout_type, ExerciseTemplate.order)
+    stmt = (
+        select(ExerciseTemplate)
+        .where(ExerciseTemplate.user_id == user_id)
+        .order_by(ExerciseTemplate.workout_type, ExerciseTemplate.order)
+    )
     if workout_type:
         stmt = stmt.where(ExerciseTemplate.workout_type == workout_type)
     return list(db.scalars(stmt))
 
 
-def _session_query():
-    return select(WorkoutSession).options(
-        selectinload(WorkoutSession.exercises).selectinload(WorkoutExercise.sets)
+def _session_query(user_id: int):
+    return (
+        select(WorkoutSession)
+        .where(WorkoutSession.user_id == user_id)
+        .options(selectinload(WorkoutSession.exercises).selectinload(WorkoutExercise.sets))
     )
 
 
 def list_sessions(
     db: Session,
+    user_id: int,
     workout_type: WorkoutType | None = None,
     start: datetime.date | None = None,
     end: datetime.date | None = None,
     limit: int | None = None,
 ) -> list[WorkoutSession]:
-    stmt = _session_query().order_by(WorkoutSession.date.desc(), WorkoutSession.id.desc())
+    stmt = _session_query(user_id).order_by(WorkoutSession.date.desc(), WorkoutSession.id.desc())
     if workout_type:
         stmt = stmt.where(WorkoutSession.workout_type == workout_type)
     if start:
@@ -48,18 +55,19 @@ def list_sessions(
     return list(db.scalars(stmt))
 
 
-def get_session(db: Session, session_id: int) -> WorkoutSession | None:
-    return db.scalar(_session_query().where(WorkoutSession.id == session_id))
+def get_session(db: Session, user_id: int, session_id: int) -> WorkoutSession | None:
+    return db.scalar(_session_query(user_id).where(WorkoutSession.id == session_id))
 
 
 def get_previous_session(
     db: Session,
+    user_id: int,
     workout_type: WorkoutType,
     before_date: datetime.date,
     exclude_id: int | None = None,
 ) -> WorkoutSession | None:
     stmt = (
-        _session_query()
+        _session_query(user_id)
         .where(WorkoutSession.workout_type == workout_type, WorkoutSession.date < before_date)
         .order_by(WorkoutSession.date.desc(), WorkoutSession.id.desc())
         .limit(1)
@@ -69,14 +77,15 @@ def get_previous_session(
     return db.scalar(stmt)
 
 
-def create_session(db: Session, data: WorkoutSessionCreate) -> WorkoutSession:
+def create_session(db: Session, user_id: int, data: WorkoutSessionCreate) -> WorkoutSession:
     session = WorkoutSession(
+        user_id=user_id,
         date=data.date,
         workout_type=data.workout_type,
         notes=data.notes,
         running_minutes=data.running_minutes,
         running_feeling=data.running_feeling,
-        cycle_week=compute_cycle_week(db, data.date),
+        cycle_week=compute_cycle_week(db, user_id, data.date),
     )
     for ex_in in data.exercises:
         exercise = WorkoutExercise(
@@ -98,22 +107,9 @@ def create_session(db: Session, data: WorkoutSessionCreate) -> WorkoutSession:
     db.add(session)
     db.commit()
     db.refresh(session)
-    return get_session(db, session.id)  # reload with eager-loaded relationships
+    return get_session(db, user_id, session.id)  # reload with eager-loaded relationships
 
 
 def delete_session(db: Session, session: WorkoutSession) -> None:
     db.delete(session)
     db.commit()
-
-
-def add_set(db: Session, exercise: WorkoutExercise, set_in) -> WorkoutSet:
-    workout_set = WorkoutSet(
-        set_number=set_in.set_number,
-        weight_kg=set_in.weight_kg,
-        reps=set_in.reps,
-        rir=set_in.rir,
-    )
-    exercise.sets.append(workout_set)
-    db.commit()
-    db.refresh(workout_set)
-    return workout_set

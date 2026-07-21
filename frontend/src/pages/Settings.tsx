@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { breaksApi } from "../api/breaks";
+import { useAuth } from "../auth/AuthContext";
 import { HabitManager } from "../components/HabitManager";
 import { pushBreakConfigToServiceWorker } from "../hooks/useNotificationScheduler";
 import type { BreakConfig } from "../types";
 
 export default function Settings() {
+  const { user, logout } = useAuth();
   const [config, setConfig] = useState<BreakConfig | null>(null);
   const [permission, setPermission] = useState<NotificationPermission>(
     "Notification" in window ? Notification.permission : "denied"
@@ -94,6 +96,16 @@ export default function Settings() {
             Desde el navegador del móvil: menú → "Añadir a pantalla de inicio". Así la app
             corre en modo standalone y las notificaciones funcionan igual que una app nativa.
           </p>
+        </div>
+
+        <div className="card">
+          <h2>Cuenta</h2>
+          <p>
+            Sesión iniciada como <strong>{user?.email}</strong>
+          </p>
+          <button className="danger" style={{ width: "100%" }} onClick={logout}>
+            Cerrar sesión
+          </button>
         </div>
       </main>
     </div>

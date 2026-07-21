@@ -13,6 +13,15 @@ resource "google_secret_manager_secret_iam_member" "api_reads_db_url" {
   member    = "serviceAccount:${google_service_account.api_runtime.email}"
 }
 
+# 1b) Mismo permiso de lectura para el secreto de firma de JWT (SECRET_KEY).
+#     Es un secreto distinto a propósito: si algún día rotas la clave de los
+#     tokens no tocas la de la base de datos, y viceversa.
+resource "google_secret_manager_secret_iam_member" "api_reads_jwt_secret" {
+  secret_id = google_secret_manager_secret.jwt_secret.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.api_runtime.email}"
+}
+
 # 2) Si usamos Cloud SQL, la service account necesita permiso para abrir el
 #    túnel del proxy integrado hacia la instancia (sin esto, el volumen
 #    cloud_sql_instance de cloud_run_api.tf se monta pero las conexiones

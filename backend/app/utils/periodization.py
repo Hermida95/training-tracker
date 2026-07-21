@@ -43,8 +43,8 @@ _CYCLE: dict[int, PeriodizationInfo] = {
 }
 
 
-def compute_cycle_week(db: Session, on_date: datetime.date) -> int:
-    start = get_program_start_date(db)
+def compute_cycle_week(db: Session, user_id: int, on_date: datetime.date) -> int:
+    start = get_program_start_date(db, user_id)
     weeks_elapsed = (on_date - start).days // 7
     return (weeks_elapsed % 4) + 1
 
