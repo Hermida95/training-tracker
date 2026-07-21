@@ -112,6 +112,17 @@ export function LeafIcon({ size = 24, strokeWidth = 1.6 }: IconProps) {
   );
 }
 
+export function ForkKnifeIcon({ size = 22, strokeWidth = 1.6 }: IconProps) {
+  return (
+    <svg {...base(size)} strokeWidth={strokeWidth}>
+      {/* tenedor */}
+      <path d="M7 3v5.5a2 2 0 002 2v0a2 2 0 002-2V3M9 3v18M9 10.5V21" />
+      {/* cuchillo */}
+      <path d="M16.5 3c-1.4 1.8-2 4-2 6.5 0 1.6.8 2.5 2 2.5V21M16.5 3v9" />
+    </svg>
+  );
+}
+
 export function CheckIcon({ size = 22, strokeWidth = 2 }: IconProps) {
   return (
     <svg {...base(size)} strokeWidth={strokeWidth}>

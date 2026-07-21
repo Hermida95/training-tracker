@@ -298,8 +298,13 @@ por FastAPI en `/docs` (Swagger UI) y `/redoc`. Resumen:
 - `/workouts`, `/workouts/templates`, `/workouts/{id}/comparison`, `/workouts/periodization` — sesiones, rutina precargada, comparación con la sesión anterior, semana del ciclo de 4
 - `/body-metrics`, `/body-metrics/weekly-average` — peso/cintura + media móvil semanal
 - `/breaks`, `/breaks/config` — pausas activas y configuración de la alarma
+- `/menu` — el plan de comidas del usuario: sube foto/PDF (máx. 8MB, guardado en la BD)
+  o texto pegado; `/menu/{id}/file` sirve el binario con el token
 - `/stats/monthly` — resumen del mes
 - `/export?format=json|text` — resumen del mes listo para pegar a un coach IA
+
+La auditoría de seguridad pre-despliegue, con los riesgos aceptados y el
+checklist de producción, está en [SECURITY.md](SECURITY.md).
 
 La inyección de la sesión de BD se hace con el patrón `Depends(get_db)` de FastAPI
 (`app/core/deps.py`), y cada módulo de `app/crud/` concentra las queries de un dominio, separado

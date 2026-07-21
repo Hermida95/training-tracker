@@ -3,6 +3,7 @@ import { useAuth } from "./auth/AuthContext";
 import { TabBar } from "./components/TabBar";
 import { useNotificationScheduler } from "./hooks/useNotificationScheduler";
 import Login from "./pages/Login";
+import Menu from "./pages/Menu";
 import Progress from "./pages/Progress";
 import Settings from "./pages/Settings";
 import Today from "./pages/Today";
@@ -32,6 +33,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<Today />} />
         <Route path="/entreno" element={<Workout />} />
+        <Route path="/menu" element={<Menu />} />
         <Route path="/progreso" element={<Progress />} />
         <Route path="/ajustes" element={<Settings />} />
         <Route path="/login" element={<Navigate to="/" replace />} />

@@ -14,6 +14,15 @@ export interface TokenResponse {
   user: User;
 }
 
+export interface MenuDocument {
+  id: number;
+  title: string;
+  content_type: string | null; // null = menú solo-texto
+  file_size: number;
+  text_content: string | null;
+  created_at: string;
+}
+
 export type HabitValueType = "boolean" | "numeric";
 
 export interface Habit {

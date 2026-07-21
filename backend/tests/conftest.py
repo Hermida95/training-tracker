@@ -38,6 +38,16 @@ def register_user(client: TestClient, email: str = "test@example.com") -> dict[s
     return {"Authorization": f"Bearer {res.json()['access_token']}"}
 
 
+@pytest.fixture(autouse=True)
+def _reset_rate_limit():
+    """El limiter de auth es global en memoria; sin esto los tests se
+    acumularían unos a otros hasta el 429 (todos comparten la IP del
+    TestClient)."""
+    from app.core.rate_limit import reset_rate_limit_state
+
+    reset_rate_limit_state()
+
+
 @pytest.fixture()
 def anon_client(db_session):
     """Cliente sin autenticar, para tests de auth y de acceso denegado."""

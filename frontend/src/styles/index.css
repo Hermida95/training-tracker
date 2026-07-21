@@ -443,6 +443,62 @@ nav.tabbar .icon {
   transition: width 0.3s ease;
 }
 
+.menu-row {
+  padding: 14px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.menu-row:last-of-type {
+  border-bottom: none;
+}
+
+.menu-row-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.menu-row-head .info {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.menu-row-head .info > span:first-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.menu-detail {
+  margin-top: 12px;
+}
+
+.menu-image {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.menu-text {
+  font: inherit;
+  white-space: pre-wrap;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+  margin: 0;
+  color: var(--text);
+  font-size: 0.9rem;
+}
+
+input[type="file"] {
+  padding: 8px;
+  font-size: 0.85rem;
+}
+
 .login-screen {
   min-height: 100%;
   display: flex;

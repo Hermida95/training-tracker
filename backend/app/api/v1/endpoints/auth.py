@@ -1,13 +1,16 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import select
 
 from app.core.deps import CurrentUser, DbSession
+from app.core.rate_limit import check_auth_rate_limit
 from app.core.security import create_access_token, hash_password, verify_password
 from app.models.user import User
 from app.schemas.auth import LoginRequest, RegisterRequest, TokenResponse, UserRead
 from app.seed.seed_data import seed_user
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+# Rate limit solo en auth: son los únicos endpoints sin token donde un
+# atacante puede iterar (fuerza bruta de contraseñas, alta masiva de cuentas).
+router = APIRouter(prefix="/auth", tags=["auth"], dependencies=[Depends(check_auth_rate_limit)])
 
 
 @router.post("/register", response_model=TokenResponse, status_code=201)

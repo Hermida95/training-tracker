@@ -6,5 +6,9 @@ extend-exclude = ["alembic/versions"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
+[tool.ruff.lint.flake8-bugbear]
+# El patrón idiomático de FastAPI usa llamadas en defaults (Depends/Form/File).
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Form", "fastapi.File"]
+
 [tool.pytest.ini_options]
 pythonpath = ["."]

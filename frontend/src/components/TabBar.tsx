@@ -1,9 +1,10 @@
 import { NavLink } from "react-router-dom";
-import { BarbellIcon, SlidersIcon, SunIcon, TrendIcon } from "./icons";
+import { BarbellIcon, ForkKnifeIcon, SlidersIcon, SunIcon, TrendIcon } from "./icons";
 
 const TABS = [
   { to: "/", label: "Hoy", icon: <SunIcon /> },
   { to: "/entreno", label: "Entreno", icon: <BarbellIcon /> },
+  { to: "/menu", label: "Menú", icon: <ForkKnifeIcon /> },
   { to: "/progreso", label: "Progreso", icon: <TrendIcon /> },
   { to: "/ajustes", label: "Ajustes", icon: <SlidersIcon /> },
 ];
