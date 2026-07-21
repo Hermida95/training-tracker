@@ -28,7 +28,7 @@ resource "google_cloud_run_v2_service" "front" {
       resources {
         limits = {
           cpu    = "1"
-          memory = "256Mi" # nginx sirviendo estáticos consume muy poco
+          memory = "512Mi" # mínimo que acepta Cloud Run con la config de CPU por defecto (con 256Mi el apply falla)
         }
       }
 
