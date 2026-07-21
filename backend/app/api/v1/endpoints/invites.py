@@ -8,13 +8,20 @@ from app.schemas.auth import InviteCodeRead
 
 router = APIRouter(prefix="/invites", tags=["invites"])
 
-# Tope de códigos sin usar por usuario: puedes invitar a quien quieras, pero
-# nadie puede generar cientos de códigos y repartirlos en masa.
+# Tope de códigos sin usar a la vez: evita generar cientos y repartirlos en masa.
 MAX_PENDING_INVITES = 5
+
+
+def _require_admin(user) -> None:
+    """Solo el administrador (primer usuario de la instancia) invita gente:
+    quién entra lo decide el dueño del despliegue, no cualquier invitado."""
+    if not user.is_admin:
+        raise HTTPException(403, "Solo el administrador puede gestionar invitaciones")
 
 
 @router.get("", response_model=list[InviteCodeRead])
 def list_invites(db: DbSession, user: CurrentUser):
+    _require_admin(user)
     return list(
         db.scalars(
             select(InviteCode)
@@ -26,6 +33,7 @@ def list_invites(db: DbSession, user: CurrentUser):
 
 @router.post("", response_model=InviteCodeRead, status_code=201)
 def create_invite(db: DbSession, user: CurrentUser):
+    _require_admin(user)
     pending = db.scalar(
         select(func.count())
         .select_from(InviteCode)

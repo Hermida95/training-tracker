@@ -10,6 +10,7 @@ class UserRead(BaseModel):
     email: EmailStr
     created_at: datetime.datetime
     has_recovery_code: bool = False
+    is_admin: bool = False
 
 
 class RegisterRequest(BaseModel):

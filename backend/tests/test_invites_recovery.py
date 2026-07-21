@@ -45,6 +45,21 @@ def test_invite_is_single_use_and_tolerates_formatting(anon_client):
     assert listed[0]["used_at"] is not None
 
 
+def test_only_admin_can_manage_invites(anon_client):
+    headers_admin = register_user(anon_client, "admin@example.com")
+    headers_amigo = register_user(anon_client, "amigo@example.com", invited_by=headers_admin)
+
+    # El primer usuario es admin; el invitado no
+    me_admin = anon_client.get("/api/v1/auth/me", headers=headers_admin).json()
+    me_amigo = anon_client.get("/api/v1/auth/me", headers=headers_amigo).json()
+    assert me_admin["is_admin"] is True
+    assert me_amigo["is_admin"] is False
+
+    # El invitado no puede generar ni listar invitaciones
+    assert anon_client.post("/api/v1/invites", headers=headers_amigo).status_code == 403
+    assert anon_client.get("/api/v1/invites", headers=headers_amigo).status_code == 403
+
+
 def test_pending_invites_are_capped(anon_client):
     headers_a = register_user(anon_client, "a@example.com")
     for _ in range(5):

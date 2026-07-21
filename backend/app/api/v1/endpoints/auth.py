@@ -47,9 +47,10 @@ def register(data: RegisterRequest, db: DbSession):
 
     # Registro cerrado por invitación. Excepción: la PRIMERA cuenta de la
     # instancia (BD sin usuarios) entra libre — es el dueño del despliegue,
-    # que aún no tiene a nadie que pueda invitarle.
+    # que aún no tiene a nadie que pueda invitarle, y queda como admin.
+    is_first_user = db.scalar(select(func.count()).select_from(User)) == 0
     invite: InviteCode | None = None
-    if db.scalar(select(func.count()).select_from(User)):
+    if not is_first_user:
         code = normalize_code(data.invite_code or "")
         invite = db.scalar(
             select(InviteCode).where(InviteCode.code == code, InviteCode.used_at.is_(None))
@@ -57,7 +58,7 @@ def register(data: RegisterRequest, db: DbSession):
         if invite is None:
             raise HTTPException(403, "Necesitas un código de invitación válido")
 
-    user = User(email=email, password_hash=hash_password(data.password))
+    user = User(email=email, password_hash=hash_password(data.password), is_admin=is_first_user)
     db.add(user)
     db.commit()
     db.refresh(user)

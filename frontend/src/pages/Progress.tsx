@@ -84,11 +84,11 @@ export default function Progress() {
                     borderRadius: 8,
                   }}
                 />
-                <Line type="monotone" dataKey="peso" stroke="#c2a878" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="peso" stroke="#3d5afe" strokeWidth={2} dot={false} />
                 <Line
                   type="monotone"
                   dataKey="cintura"
-                  stroke="#8fa3ad"
+                  stroke="#8d949e"
                   strokeWidth={2}
                   dot={false}
                 />

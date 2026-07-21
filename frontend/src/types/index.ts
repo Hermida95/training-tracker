@@ -7,6 +7,7 @@ export interface User {
   email: string;
   created_at: string;
   has_recovery_code: boolean;
+  is_admin: boolean;
 }
 
 export interface InviteCode {

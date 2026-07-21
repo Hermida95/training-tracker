@@ -28,7 +28,9 @@ PostgreSQL &nbsp;|&nbsp; React 18 · Vite · TypeScript · PWA + Service Worker
   con acciones "Hecho" / "Posponer 5 min"
 - 🍴 **Menú**: sube tu plan de comidas (foto/PDF/texto) y tenlo siempre a mano
 - 🔐 **Multiusuario**: cuentas con JWT, datos completamente aislados por usuario,
-  rate limiting y auditoría de seguridad documentada
+  registro cerrado con códigos de invitación que reparte el administrador,
+  recuperación de contraseña sin email (código de un solo uso), rate limiting
+  y auditoría de seguridad documentada
 
 ```
 training-tracker/

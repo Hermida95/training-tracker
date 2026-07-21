@@ -1,21 +1,22 @@
-/* Estética nórdica / gimnasio boutique: base cálida de carbón y piedra,
-   un único acento bronce, bordes de 1px, radios contenidos y tipografía
-   con aire (versalitas espaciadas en los rótulos). Nada de colores neón. */
+/* Estética nórdica: base de grises neutros fríos y un único acento en azul
+   Klein (IKB). Bordes de 1px, radios contenidos y tipografía con aire
+   (versalitas espaciadas en los rótulos). Nada de degradados ni neones:
+   el color solo aparece donde hay que mirar. */
 
 :root {
   color-scheme: dark light;
 
-  --bg: #171512;
-  --bg-elevated: #1f1c18;
-  --bg-card: #26221d66;
-  --border: #322d26;
-  --text: #ece7de;
-  --text-muted: #98917f;
-  --accent: #c2a878;
-  --accent-strong: #d4bc8f;
-  --accent-ink: #221c11; /* texto sobre superficies bronce */
-  --danger: #b8756a;
-  --warning: #c2a878;
+  --bg: #131416;
+  --bg-elevated: #1a1c1f;
+  --bg-card: #22252966;
+  --border: #2c3035;
+  --text: #e8eaed;
+  --text-muted: #8d949e;
+  --accent: #3d5afe; /* azul Klein, algo aclarado para contrastar sobre fondo oscuro */
+  --accent-strong: #536dfe;
+  --accent-ink: #ffffff; /* texto sobre superficies azules */
+  --danger: #c96a63;
+  --warning: #c9a227;
   --radius: 10px;
 
   font-family:
@@ -25,16 +26,16 @@
 
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #f2efe9;
-    --bg-elevated: #faf8f4;
+    --bg: #f1f2f4;
+    --bg-elevated: #fafbfc;
     --bg-card: #ffffffb3;
-    --border: #e0dacd;
-    --text: #26221c;
-    --text-muted: #837b6c;
-    --accent: #a3855a;
-    --accent-strong: #8d7148;
+    --border: #dde0e4;
+    --text: #1c1e21;
+    --text-muted: #6b7280;
+    --accent: #002fa7; /* International Klein Blue puro: sobre fondo claro luce mejor saturado */
+    --accent-strong: #00248a;
     --accent-ink: #ffffff;
-    --danger: #a35f54;
+    --danger: #a8443c;
   }
 }
 
@@ -98,6 +99,20 @@ p { margin: 0 0 8px; color: var(--text-muted); }
   border-radius: var(--radius);
   padding: 18px;
   margin-bottom: 14px;
+  /* Red de seguridad: ningún hijo puede sobresalir de la tarjeta. */
+  overflow: hidden;
+}
+
+/* Móviles estrechos: menos padding para ganar ancho útil dentro de la tarjeta. */
+@media (max-width: 380px) {
+  .card {
+    padding: 14px;
+  }
+
+  main {
+    padding-left: 12px;
+    padding-right: 12px;
+  }
 }
 
 /* Botones grandes: pensados para tocar entre series en el gym, con el pulgar,
@@ -178,6 +193,10 @@ input, select, textarea {
   padding: 10px 12px;
   min-height: 44px;
   width: 100%;
+  /* Safari (iOS) da a date/time/file un ancho intrínseco mayor que su
+     contenedor: sin esto, esos campos se salen de la tarjeta en el móvil. */
+  max-width: 100%;
+  min-width: 0;
 }
 
 input:focus, select:focus, textarea:focus {
@@ -191,23 +210,53 @@ input[type="number"] {
 
 .stepper {
   display: grid;
-  grid-template-columns: 48px 1fr 48px;
+  /* minmax(0,1fr) en el centro: sin el 0, un valor largo ("10.500 pasos")
+     ensancha la rejilla y empuja los botones fuera de la tarjeta. */
+  grid-template-columns: 42px minmax(0, 1fr) 42px;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
+  width: 100%;
+  min-width: 0;
 }
 
 .stepper button {
   min-height: 48px;
+  width: 42px;
   font-size: 1.2rem;
   font-weight: 500;
   padding: 0;
+  flex-shrink: 0;
 }
 
 .stepper output {
-  text-align: center;
-  font-size: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.15;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.stepper-value {
+  font-size: 1.05rem;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stepper-unit {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pill {
@@ -253,6 +302,17 @@ input[type="number"] {
   display: flex;
   flex-direction: column;
   gap: 3px;
+  /* Permite que el nombre largo se encoja en vez de empujar al stepper. */
+  min-width: 0;
+  flex: 1;
+}
+
+/* Ancho del stepper en el checklist: suficiente para que quepa un valor de 5
+   cifras con separador de miles ("10.500"), pero adaptable a pantallas
+   estrechas para no desbordar la tarjeta. */
+.habit-stepper {
+  width: min(178px, 52vw);
+  flex-shrink: 0;
 }
 
 .habit-row .streak,
@@ -321,8 +381,10 @@ nav.tabbar .icon {
 
 .set-row {
   display: grid;
-  grid-template-columns: 28px 1fr 1fr;
-  gap: 8px;
+  /* minmax(0,1fr) por lo mismo que en .stepper: permite que las dos columnas
+     de steppers se encojan en móviles estrechos en vez de desbordar. */
+  grid-template-columns: 24px minmax(0, 1fr) minmax(0, 1fr);
+  gap: 6px;
   align-items: center;
   margin-bottom: 8px;
 }

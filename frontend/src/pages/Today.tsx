@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import { habitsApi } from "../api/habits";
 import { workoutsApi } from "../api/workouts";
@@ -59,14 +59,63 @@ export default function Today() {
 
   useEffect(load, []);
 
-  const toggleDone = async (habit: HabitWithStatus) => {
-    await habitsApi.upsertLog(habit.id, todayIso(), !habit.done_today);
-    load();
+  // Un timer por hábito: los toques rápidos del stepper (+/-) se agrupan en
+  // una sola escritura en vez de una petición por toque.
+  const pending = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
+
+  /** Pinta el cambio al instante y sincroniza con la API en segundo plano.
+   *
+   *  Sin esto, cada toque esperaba al servidor (escritura + recarga de tres
+   *  endpoints) antes de pintar: eso es lo que se notaba como lentitud.
+   *  `mutate` recibe el estado MÁS RECIENTE del hábito y devuelve el nuevo,
+   *  para que varios toques seguidos se acumulen en vez de pisarse entre sí. */
+  const updateHabit = (
+    habitId: number,
+    mutate: (habit: HabitWithStatus) => { done: boolean; value: number | null }
+  ) => {
+    let next: { done: boolean; value: number | null } | null = null;
+
+    setHabits((prev) =>
+      prev.map((h) => {
+        if (h.id !== habitId) return h;
+        next = mutate(h);
+        return { ...h, done_today: next.done, value_today: next.value };
+      })
+    );
+
+    const existing = pending.current.get(habitId);
+    if (existing) clearTimeout(existing);
+    pending.current.set(
+      habitId,
+      setTimeout(async () => {
+        pending.current.delete(habitId);
+        if (!next) return;
+        try {
+          await habitsApi.upsertLog(habitId, todayIso(), next.done, next.value);
+        } finally {
+          // Recarga para traer los datos derivados (rachas, puntos del día);
+          // si la escritura falló, además devuelve la UI al estado real.
+          load();
+        }
+      }, 400)
+    );
   };
 
-  const setNumericValue = async (habit: HabitWithStatus, value: number) => {
-    await habitsApi.upsertLog(habit.id, todayIso(), false, value);
-    load();
+  const toggleDone = (habit: HabitWithStatus) =>
+    updateHabit(habit.id, (h) => ({ done: !h.done_today, value: h.value_today }));
+
+  const setNumericValue = (habit: HabitWithStatus, value: number) => {
+    // El Stepper calcula el valor sobre la propiedad que tenía al pintarse, que
+    // puede haber quedado atrás con toques rápidos; lo convertimos en un
+    // incremento y lo aplicamos sobre el valor vigente.
+    const delta = value - (habit.value_today ?? 0);
+    updateHabit(habit.id, (h) => {
+      const nextValue = Math.max(0, Math.round(((h.value_today ?? 0) + delta) * 100) / 100);
+      // Espeja la regla del backend: un hábito numérico se da por hecho al
+      // alcanzar su objetivo, para que el check se pinte en el mismo toque.
+      const done = h.target_value !== null ? nextValue >= h.target_value : h.done_today;
+      return { done, value: nextValue };
+    });
   };
 
   const dueHabits = habits.filter((h) => h.due_today);
@@ -134,7 +183,7 @@ export default function Today() {
               </div>
 
               {habit.value_type === "numeric" ? (
-                <div style={{ width: 150 }}>
+                <div className="habit-stepper">
                   <Stepper
                     value={habit.value_today}
                     step={stepFor(habit)}

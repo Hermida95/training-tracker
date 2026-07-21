@@ -54,9 +54,10 @@ y qué riesgos quedan aceptados a sabiendas.
 - **Sin bloqueo de cuenta**: el rate limit por IP frena la fuerza bruta online,
   pero no hay lockout por cuenta. Con contraseñas de 8+ y bcrypt, riesgo bajo.
 - **Registro por invitación**: cerrado al público. Solo se entra con un código
-  de un solo uso generado por un usuario existente (máx. 5 pendientes por
-  usuario); la única excepción es la primera cuenta de una instancia vacía,
-  que pertenece al dueño del despliegue.
+  de un solo uso, y **únicamente el administrador puede generarlos** (máx. 5
+  pendientes). El administrador es la primera cuenta de la instancia, la del
+  dueño del despliegue, que por eso es también la única que puede registrarse
+  sin código. Los invitados no pueden invitar a su vez.
 
 ## Checklist antes de cada despliegue
 

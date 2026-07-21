@@ -107,7 +107,7 @@ export default function Settings() {
           </p>
         </div>
 
-        <InviteManager />
+        {user?.is_admin && <InviteManager />}
 
         <div className="card">
           <h2>Cuenta</h2>
