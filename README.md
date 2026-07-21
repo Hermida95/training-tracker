@@ -1,18 +1,44 @@
 # Entreno & Hábitos
 
-App full-stack de seguimiento de entrenamiento, hábitos diarios y pausas activas.
+[![CI](https://github.com/Hermida95/training-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Hermida95/training-tracker/actions/workflows/ci.yml)
+[![Deploy](https://github.com/Hermida95/training-tracker/actions/workflows/deploy.yml/badge.svg)](https://github.com/Hermida95/training-tracker/actions/workflows/deploy.yml)
 
-- **Backend**: Python 3.12 · FastAPI · SQLAlchemy 2.0 · Pydantic v2 · Alembic · PostgreSQL (SQLite en tests)
-- **Frontend**: React 18 · Vite · TypeScript · PWA instalable con notificaciones locales programadas
-- **Infra**: Docker Compose (local) · Cloud Run + Terraform (producción)
+PWA full-stack de seguimiento de entrenamiento y hábitos: rutina de gimnasio con
+periodización de 4 semanas, checklist diario con rachas y puntos, métricas
+corporales con media semanal, alarma antisedentarismo con notificaciones
+programadas, plan de comidas y cuentas multiusuario. Diseño nórdico minimalista,
+pensada para usarse con el pulgar entre series.
+
+**Stack**: Python 3.12 · FastAPI · SQLAlchemy 2.0 · Pydantic v2 · Alembic ·
+PostgreSQL &nbsp;|&nbsp; React 18 · Vite · TypeScript · PWA + Service Worker
+&nbsp;|&nbsp; Docker · Terraform · GCP Cloud Run · GitHub Actions (push a main = deploy)
+
+## Funcionalidades
+
+- 🏋️ **Entreno**: rutina precargada (GYM 1/2/3 + running Z2), registro de series
+  en 2 toques, comparación automática con la sesión anterior del mismo tipo, y
+  ciclo de periodización S1 RIR 3 → S4 descarga visible en la UI
+- ✅ **Hábitos**: checklist según el día de la semana, hábitos personalizables
+  (booleanos o con objetivo numérico), rachas por hábito y puntuación diaria por
+  niveles (100% = día perfecto ⭐)
+- 📈 **Progreso**: peso y cintura con media móvil semanal (recharts), resumen
+  mensual y export JSON/texto para pegar a un coach IA
+- ⏰ **Alarma antisedentarismo**: notificaciones locales programadas cada 45-50
+  min (L-V, 08:30-15:00 Europe/Madrid) que funcionan con el móvil bloqueado,
+  con acciones "Hecho" / "Posponer 5 min"
+- 🍴 **Menú**: sube tu plan de comidas (foto/PDF/texto) y tenlo siempre a mano
+- 🔐 **Multiusuario**: cuentas con JWT, datos completamente aislados por usuario,
+  rate limiting y auditoría de seguridad documentada
 
 ```
 training-tracker/
-├── backend/            FastAPI, modelos, migraciones, tests
+├── backend/             FastAPI, modelos, migraciones, tests (pytest)
 ├── frontend/            React + Vite + service worker
-├── infra/terraform/     IaC para GCP Cloud Run
+├── infra/terraform/     IaC para GCP: Cloud Run, secretos, Workload Identity
 ├── docker-compose.yml   Entorno local completo (db + api + front)
-└── .github/workflows/   CI: lint + tests
+├── .github/workflows/   CI (lint + tests) y CD (deploy a Cloud Run)
+├── DEPLOY.md            Guía de despliegue 0€/mes (Neon + Cloud Run)
+└── SECURITY.md          Auditoría de seguridad y riesgos aceptados
 ```
 
 ## Arranque local

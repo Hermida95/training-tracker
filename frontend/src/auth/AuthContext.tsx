@@ -56,6 +56,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
+// Patrón estándar de contexto + hook en el mismo fichero. El warning de
+// react-refresh solo afecta al hot-reload en desarrollo (recarga completa en
+// vez de parcial al editar ESTE fichero), no al build de producción.
+// eslint-disable-next-line react-refresh/only-export-components
 export function useAuth(): AuthState {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth debe usarse dentro de <AuthProvider>");

@@ -1,4 +1,12 @@
-# Auditoría de seguridad
+# Seguridad
+
+**¿Has encontrado una vulnerabilidad?** Abre un
+[Security Advisory privado](https://github.com/Hermida95/training-tracker/security/advisories/new)
+en vez de un issue público. Gracias.
+
+---
+
+## Auditoría de seguridad
 
 Revisión hecha sobre el código completo (API, frontend, service worker, infra)
 antes del primer despliegue público. Formato: qué se comprobó, qué se corrigió
