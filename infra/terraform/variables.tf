@@ -83,3 +83,8 @@ variable "app_timezone" {
   type        = string
   default     = "Europe/Madrid"
 }
+
+variable "github_repo" {
+  description = "Repositorio de GitHub autorizado a desplegar, en formato 'usuario/repo' (ej. 'miguel/training-tracker'). Es el candado del Workload Identity: solo los workflows de ESTE repo pueden pedir credenciales de deploy (ver cicd.tf)."
+  type        = string
+}

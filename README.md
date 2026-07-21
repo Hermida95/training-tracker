@@ -169,6 +169,12 @@ offset real de esa zona en ese instante.
 
 ## Despliegue en GCP Cloud Run — paso a paso
 
+> **La guía definitiva y actualizada está en [DEPLOY.md](DEPLOY.md)**: Neon +
+> Terraform + despliegue automático con GitHub Actions (push a main = deploy,
+> sin claves guardadas gracias a Workload Identity, ver
+> `infra/terraform/cicd.tf`). Lo de abajo es la variante manual con gcloud,
+> útil para entender qué hace cada pieza por dentro.
+
 ### 0. Prerrequisitos
 
 ```bash

@@ -122,6 +122,13 @@ resource "google_cloud_run_v2_service" "api" {
   # Terraform no adivina que necesita las APIs habilitadas o el secreto
   # relleno antes de crear el servicio; se lo decimos explícitamente para que
   # el orden de creación sea siempre el correcto en un `apply` desde cero.
+  # El CI/CD actualiza la imagen en cada push a main (`gcloud run deploy`);
+  # sin este ignore_changes, un `terraform apply` posterior la revertiría.
+  # Terraform gestiona la infraestructura; el pipeline, la versión del código.
+  lifecycle {
+    ignore_changes = [template[0].containers[0].image]
+  }
+
   depends_on = [
     google_project_service.apis,
     google_secret_manager_secret_version.database_url,

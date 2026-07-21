@@ -10,6 +10,9 @@ resource "google_cloud_run_v2_service" "front" {
   ingress = "INGRESS_TRAFFIC_ALL"
 
   template {
+    # Identidad mínima sin roles (ver service_accounts.tf).
+    service_account = google_service_account.front_runtime.email
+
     scaling {
       min_instance_count = 0
       max_instance_count = 3
@@ -38,6 +41,15 @@ resource "google_cloud_run_v2_service" "front" {
         failure_threshold     = 5
       }
     }
+  }
+
+  # El CI/CD (GitHub Actions) actualiza la imagen con `gcloud run deploy` en
+  # cada push a main. Sin este ignore_changes, el siguiente `terraform apply`
+  # vería "la imagen del servicio no coincide con var.front_image" y la
+  # revertiría a una versión vieja. Terraform es dueño de la infraestructura;
+  # el pipeline es dueño de QUÉ versión del código corre en ella.
+  lifecycle {
+    ignore_changes = [template[0].containers[0].image]
   }
 
   depends_on = [google_project_service.apis]

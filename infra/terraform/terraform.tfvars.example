@@ -5,6 +5,10 @@
 project_id = "tu-project-id-de-gcp"
 region     = "europe-southwest1"
 
+# Tu repositorio de GitHub, formato "usuario/repo". Es el único repo que podrá
+# desplegar vía Workload Identity (ver cicd.tf).
+github_repo = "tu-usuario/training-tracker"
+
 # Se actualizan en cada deploy (ver README → CI/CD). Para el primer apply usa
 # ":latest" o el tag que hayas subido a mano.
 api_image   = "europe-southwest1-docker.pkg.dev/tu-project-id-de-gcp/training-tracker/api:latest"

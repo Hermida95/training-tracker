@@ -5,12 +5,14 @@
 # pidiéndote que la actives — así que las listamos todas por adelantado.
 locals {
   required_apis = [
-    "run.googleapis.com",                 # Cloud Run: para desplegar los contenedores de api y front
-    "artifactregistry.googleapis.com",    # Artifact Registry: dónde viven las imágenes Docker
-    "secretmanager.googleapis.com",       # Secret Manager: guarda DATABASE_URL sin exponerla en variables de entorno planas
-    "sqladmin.googleapis.com",            # Cloud SQL Admin: solo hace falta si use_cloud_sql = true, pero habilitarla de más no molesta
-    "iam.googleapis.com",                 # IAM: para crear la service account dedicada de Cloud Run
-    "cloudresourcemanager.googleapis.com" # Requisito interno de Terraform para leer metadatos del proyecto
+    "run.googleapis.com",                  # Cloud Run: para desplegar los contenedores de api y front
+    "artifactregistry.googleapis.com",     # Artifact Registry: dónde viven las imágenes Docker
+    "secretmanager.googleapis.com",        # Secret Manager: guarda DATABASE_URL sin exponerla en variables de entorno planas
+    "sqladmin.googleapis.com",             # Cloud SQL Admin: solo hace falta si use_cloud_sql = true, pero habilitarla de más no molesta
+    "iam.googleapis.com",                  # IAM: para crear las service accounts dedicadas
+    "iamcredentials.googleapis.com",       # Genera las credenciales temporales del deploy (Workload Identity, ver cicd.tf)
+    "sts.googleapis.com",                  # Security Token Service: intercambia el token de GitHub por uno de Google (ver cicd.tf)
+    "cloudresourcemanager.googleapis.com", # Requisito interno de Terraform para leer metadatos del proyecto
   ]
 }
 
