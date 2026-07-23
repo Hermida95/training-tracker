@@ -88,6 +88,22 @@ def test_rest_day_is_neutral(client):
     assert saturday["streak"] == 1  # la del viernes sigue viva
 
 
+def test_score_history_returns_one_entry_per_day(client):
+    habit_id = _create_habit(client, "a", ALL_DAYS)
+    client.post(f"/api/v1/habits/{habit_id}/logs", json={"date": "2026-07-15", "done": True})
+
+    history = client.get(
+        "/api/v1/habits/score/history", params={"end": "2026-07-16", "days": 7}
+    ).json()
+    assert len(history) == 7
+    # Orden cronológico ascendente, terminando en 'end'
+    assert history[0]["date"] == "2026-07-10"
+    assert history[-1]["date"] == "2026-07-16"
+    # El día con el hábito hecho es perfecto; el resto, fallados
+    perfect = next(d for d in history if d["date"] == "2026-07-15")
+    assert perfect["tier"] == "perfect"
+
+
 def test_monthly_stats_include_points(client):
     habit_id = _create_habit(client, "a", ALL_DAYS)
     client.post(f"/api/v1/habits/{habit_id}/logs", json={"date": "2026-07-13", "done": True})

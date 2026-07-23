@@ -27,6 +27,56 @@ def list_exercise_templates(
     return list(db.scalars(stmt))
 
 
+def get_template(db: Session, user_id: int, template_id: int) -> ExerciseTemplate | None:
+    tpl = db.get(ExerciseTemplate, template_id)
+    return tpl if tpl is not None and tpl.user_id == user_id else None
+
+
+def create_template(db: Session, user_id: int, data) -> ExerciseTemplate:
+    # order por defecto: al final de su día, para que el nuevo ejercicio
+    # aparezca abajo en la rutina sin tener que calcularlo en el cliente.
+    if data.order is None:
+        last = db.scalar(
+            select(ExerciseTemplate.order)
+            .where(
+                ExerciseTemplate.user_id == user_id,
+                ExerciseTemplate.workout_type == data.workout_type,
+            )
+            .order_by(ExerciseTemplate.order.desc())
+            .limit(1)
+        )
+        order = (last or 0) + 1
+    else:
+        order = data.order
+
+    tpl = ExerciseTemplate(
+        user_id=user_id,
+        workout_type=data.workout_type,
+        name=data.name,
+        order=order,
+        target_sets=data.target_sets,
+        target_reps=data.target_reps,
+        base_weight_kg=data.base_weight_kg,
+    )
+    db.add(tpl)
+    db.commit()
+    db.refresh(tpl)
+    return tpl
+
+
+def update_template(db: Session, tpl: ExerciseTemplate, data) -> ExerciseTemplate:
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(tpl, field, value)
+    db.commit()
+    db.refresh(tpl)
+    return tpl
+
+
+def delete_template(db: Session, tpl: ExerciseTemplate) -> None:
+    db.delete(tpl)
+    db.commit()
+
+
 def _session_query(user_id: int):
     return (
         select(WorkoutSession)
@@ -87,6 +137,16 @@ def create_session(db: Session, user_id: int, data: WorkoutSessionCreate) -> Wor
         running_feeling=data.running_feeling,
         cycle_week=compute_cycle_week(db, user_id, data.date),
     )
+    _fill_session(session, data)
+    db.add(session)
+    db.commit()
+    db.refresh(session)
+    return get_session(db, user_id, session.id)  # reload with eager-loaded relationships
+
+
+def _fill_session(session: WorkoutSession, data: WorkoutSessionCreate) -> None:
+    """Vuelca los ejercicios/series del payload en la sesión (crear o reemplazar)."""
+    session.exercises.clear()  # en update: cascade borra los ejercicios viejos
     for ex_in in data.exercises:
         exercise = WorkoutExercise(
             name=ex_in.name,
@@ -104,10 +164,22 @@ def create_session(db: Session, user_id: int, data: WorkoutSessionCreate) -> Wor
             )
         session.exercises.append(exercise)
 
-    db.add(session)
+
+def update_session(
+    db: Session, session: WorkoutSession, data: WorkoutSessionCreate
+) -> WorkoutSession:
+    """Reemplaza el contenido de una sesión existente (autosave del entreno).
+
+    La fecha y el tipo no cambian una vez creada la sesión; solo se
+    actualizan ejercicios, series y los campos de running.
+    """
+    session.notes = data.notes
+    session.running_minutes = data.running_minutes
+    session.running_feeling = data.running_feeling
+    _fill_session(session, data)
     db.commit()
     db.refresh(session)
-    return get_session(db, user_id, session.id)  # reload with eager-loaded relationships
+    return get_session(db, session.user_id, session.id)
 
 
 def delete_session(db: Session, session: WorkoutSession) -> None:

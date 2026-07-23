@@ -1,28 +1,29 @@
-import { useEffect, useRef, useState } from "react";
-import type { ReactNode } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { habitsApi } from "../api/habits";
 import { workoutsApi } from "../api/workouts";
 import {
   CheckIcon,
-  CircleCheckIcon,
-  CircleHalfIcon,
-  CircleIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
   FlameIcon,
-  LeafIcon,
-  StarIcon,
 } from "../components/icons";
+import { ProgressRing } from "../components/ProgressRing";
 import { Stepper } from "../components/Stepper";
 import type { DayScore, DayScoreTier, HabitWithStatus, PeriodizationInfo } from "../types";
-import { todayIsoMadrid as todayIso } from "../utils/date";
+import {
+  addDaysIso,
+  friendlyDateLabel,
+  isFutureIso,
+  todayIsoMadrid,
+  weekdayInitial,
+} from "../utils/date";
 
-// Icono y texto por nivel de puntuación del día. El "plus" grande es el día
-// perfecto (100% -> 3 pts); un día decente (>=75%) mantiene la racha viva.
-const TIER_DISPLAY: Record<DayScoreTier, { icon: ReactNode; label: string }> = {
-  perfect: { icon: <StarIcon size={26} />, label: "Día perfecto · +3 pts" },
-  great: { icon: <CircleCheckIcon size={26} />, label: "Buen día · +2 pts" },
-  half: { icon: <CircleHalfIcon size={26} />, label: "A medias · +1 pt" },
-  missed: { icon: <CircleIcon size={26} />, label: "Aún sin puntos hoy" },
-  rest: { icon: <LeafIcon size={26} />, label: "Día libre" },
+const TIER_LABEL: Record<DayScoreTier, string> = {
+  perfect: "Día perfecto",
+  great: "Buen día",
+  half: "A medias",
+  missed: "Sin completar",
+  rest: "Día libre",
 };
 
 // Paso del stepper proporcional al objetivo del hábito, para que registrar
@@ -38,41 +39,49 @@ function stepFor(habit: HabitWithStatus): number {
 }
 
 export default function Today() {
+  const [date, setDate] = useState(todayIsoMadrid());
   const [habits, setHabits] = useState<HabitWithStatus[]>([]);
   const [periodization, setPeriodization] = useState<PeriodizationInfo | null>(null);
   const [score, setScore] = useState<DayScore | null>(null);
+  const [week, setWeek] = useState<DayScore[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const load = () => {
+  const isToday = date === todayIsoMadrid();
+
+  const load = useCallback(() => {
     Promise.all([
-      habitsApi.today(todayIso()),
-      workoutsApi.periodization(todayIso()),
-      habitsApi.score(todayIso()),
+      habitsApi.today(date),
+      workoutsApi.periodization(date),
+      habitsApi.score(date),
+      habitsApi.scoreHistory(date, 7),
     ])
-      .then(([h, p, s]) => {
+      .then(([h, p, s, w]) => {
         setHabits(h);
         setPeriodization(p);
         setScore(s);
+        setWeek(w);
       })
       .finally(() => setLoading(false));
-  };
+  }, [date]);
 
-  useEffect(load, []);
+  useEffect(() => {
+    setLoading(true);
+    load();
+  }, [load]);
 
   // Un timer por hábito: los toques rápidos del stepper (+/-) se agrupan en
   // una sola escritura en vez de una petición por toque.
   const pending = useRef<Map<number, ReturnType<typeof setTimeout>>>(new Map());
 
   /** Pinta el cambio al instante y sincroniza con la API en segundo plano.
-   *
-   *  Sin esto, cada toque esperaba al servidor (escritura + recarga de tres
-   *  endpoints) antes de pintar: eso es lo que se notaba como lentitud.
-   *  `mutate` recibe el estado MÁS RECIENTE del hábito y devuelve el nuevo,
-   *  para que varios toques seguidos se acumulen en vez de pisarse entre sí. */
+   *  `mutate` recibe el estado MÁS RECIENTE del hábito para que varios toques
+   *  seguidos se acumulen en vez de pisarse entre sí. Escribe siempre en la
+   *  fecha seleccionada, que puede ser un día pasado. */
   const updateHabit = (
     habitId: number,
     mutate: (habit: HabitWithStatus) => { done: boolean; value: number | null }
   ) => {
+    const writeDate = date;
     let next: { done: boolean; value: number | null } | null = null;
 
     setHabits((prev) =>
@@ -91,11 +100,11 @@ export default function Today() {
         pending.current.delete(habitId);
         if (!next) return;
         try {
-          await habitsApi.upsertLog(habitId, todayIso(), next.done, next.value);
+          await habitsApi.upsertLog(habitId, writeDate, next.done, next.value);
         } finally {
-          // Recarga para traer los datos derivados (rachas, puntos del día);
-          // si la escritura falló, además devuelve la UI al estado real.
-          load();
+          // Solo recargamos los datos derivados si seguimos en la misma fecha
+          // (evita pisar la UI si el usuario ya navegó a otro día).
+          if (writeDate === date) load();
         }
       }, 400)
     );
@@ -105,14 +114,9 @@ export default function Today() {
     updateHabit(habit.id, (h) => ({ done: !h.done_today, value: h.value_today }));
 
   const setNumericValue = (habit: HabitWithStatus, value: number) => {
-    // El Stepper calcula el valor sobre la propiedad que tenía al pintarse, que
-    // puede haber quedado atrás con toques rápidos; lo convertimos en un
-    // incremento y lo aplicamos sobre el valor vigente.
     const delta = value - (habit.value_today ?? 0);
     updateHabit(habit.id, (h) => {
       const nextValue = Math.max(0, Math.round(((h.value_today ?? 0) + delta) * 100) / 100);
-      // Espeja la regla del backend: un hábito numérico se da por hecho al
-      // alcanzar su objetivo, para que el check se pinte en el mismo toque.
       const done = h.target_value !== null ? nextValue >= h.target_value : h.done_today;
       return { done, value: nextValue };
     });
@@ -120,16 +124,88 @@ export default function Today() {
 
   const dueHabits = habits.filter((h) => h.due_today);
   const doneCount = dueHabits.filter((h) => h.done_today).length;
+  const completion = score?.completion_rate ?? 0;
+  const perfect = score?.tier === "perfect";
 
   return (
     <div>
-      <div className="top-bar">
-        <h1>Hoy</h1>
-        <span className="pill ok">
-          {doneCount}/{dueHabits.length}
-        </span>
+      <div className="top-bar date-nav">
+        <button
+          className="ghost icon-btn"
+          onClick={() => setDate(addDaysIso(date, -1))}
+          aria-label="Día anterior"
+        >
+          <ChevronLeftIcon />
+        </button>
+        <button className="date-label" onClick={() => setDate(todayIsoMadrid())}>
+          {friendlyDateLabel(date)}
+        </button>
+        <button
+          className="ghost icon-btn"
+          onClick={() => setDate(addDaysIso(date, 1))}
+          disabled={isFutureIso(addDaysIso(date, 1))}
+          aria-label="Día siguiente"
+        >
+          <ChevronRightIcon />
+        </button>
       </div>
+
       <main>
+        {/* --- Héroe gamificado: aro de progreso + racha + puntos --- */}
+        <div className="hero-card">
+          <ProgressRing progress={completion} perfect={perfect} size={132}>
+            <span className="hero-pct">{Math.round(completion * 100)}%</span>
+            <span className="hero-sub">
+              {dueHabits.length > 0 ? `${doneCount}/${dueHabits.length}` : "libre"}
+            </span>
+          </ProgressRing>
+
+          <div className="hero-side">
+            <div className="hero-streak">
+              <FlameIcon size={22} />
+              <div>
+                <strong>{score?.streak ?? 0}</strong>
+                <span>{score?.streak === 1 ? "día de racha" : "días de racha"}</span>
+              </div>
+            </div>
+            <div className="hero-badges">
+              <span className={`tier-badge tier-${score?.tier ?? "missed"}`}>
+                {TIER_LABEL[score?.tier ?? "missed"]}
+              </span>
+              {score && score.points > 0 && (
+                <span className="points-badge">+{score.points} pts</span>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* --- Tira de la última semana: un aro por día, coloreado por nivel --- */}
+        <div className="week-strip">
+          {week.map((d) => {
+            const selected = d.date === date;
+            const rate = d.completion_rate ?? 0;
+            return (
+              <button
+                key={d.date}
+                className={`week-day tier-${d.tier} ${selected ? "selected" : ""}`}
+                onClick={() => setDate(d.date)}
+                aria-label={`${weekdayInitial(d.date)} · ${Math.round(rate * 100)}%`}
+              >
+                <span className="week-dot">
+                  {d.tier === "perfect" ? (
+                    <CheckIcon size={16} strokeWidth={2.4} />
+                  ) : d.tier === "rest" ? (
+                    "·"
+                  ) : (
+                    Math.round(rate * 100)
+                  )}
+                </span>
+                <span className="week-label">{weekdayInitial(d.date)}</span>
+              </button>
+            );
+          })}
+        </div>
+
         {periodization && (
           <div className="banner">
             <strong>{periodization.label}</strong> · {periodization.rir_target}
@@ -139,38 +215,11 @@ export default function Today() {
           </div>
         )}
 
-        {score && score.tier !== "rest" && (
-          <div className={`score-card tier-${score.tier}`}>
-            <span className="score-icon">{TIER_DISPLAY[score.tier].icon}</span>
-            <div className="score-info">
-              <strong>{TIER_DISPLAY[score.tier].label}</strong>
-              <span>
-                <FlameIcon /> Racha: {score.streak} {score.streak === 1 ? "día" : "días"}
-                {score.tier !== "perfect" &&
-                  score.due_count > 0 &&
-                  ` · ${score.done_count}/${score.due_count} para el pleno`}
-              </span>
-            </div>
-            <div
-              className="score-progress"
-              role="progressbar"
-              aria-valuenow={Math.round((score.completion_rate ?? 0) * 100)}
-              aria-valuemin={0}
-              aria-valuemax={100}
-            >
-              <div
-                className="score-progress-fill"
-                style={{ width: `${(score.completion_rate ?? 0) * 100}%` }}
-              />
-            </div>
-          </div>
-        )}
-
         <div className="card">
-          <h2>Checklist</h2>
+          <h2>{isToday ? "Checklist de hoy" : `Checklist · ${friendlyDateLabel(date)}`}</h2>
           {loading && <p>Cargando…</p>}
           {!loading && dueHabits.length === 0 && (
-            <p className="empty-state">Nada programado hoy. Descansa.</p>
+            <p className="empty-state">Nada programado este día. Descansa.</p>
           )}
           {dueHabits.map((habit) => (
             <div className="habit-row" key={habit.id}>

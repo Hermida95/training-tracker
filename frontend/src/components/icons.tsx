@@ -123,6 +123,22 @@ export function ForkKnifeIcon({ size = 22, strokeWidth = 1.6 }: IconProps) {
   );
 }
 
+export function ChevronLeftIcon({ size = 22, strokeWidth = 1.8 }: IconProps) {
+  return (
+    <svg {...base(size)} strokeWidth={strokeWidth}>
+      <path d="M15 5l-7 7 7 7" />
+    </svg>
+  );
+}
+
+export function ChevronRightIcon({ size = 22, strokeWidth = 1.8 }: IconProps) {
+  return (
+    <svg {...base(size)} strokeWidth={strokeWidth}>
+      <path d="M9 5l7 7-7 7" />
+    </svg>
+  );
+}
+
 export function CheckIcon({ size = 22, strokeWidth = 2 }: IconProps) {
   return (
     <svg {...base(size)} strokeWidth={strokeWidth}>

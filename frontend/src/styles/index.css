@@ -389,6 +389,46 @@ nav.tabbar .icon {
   margin-bottom: 8px;
 }
 
+/* ===== Editor de rutina ===== */
+.routine-row {
+  padding: 12px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.routine-name {
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.routine-fields {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.routine-fields label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.68rem;
+}
+
+.routine-fields input {
+  min-height: 40px;
+  text-align: center;
+}
+
+.routine-del {
+  margin-top: 8px;
+  min-height: 40px;
+  padding: 6px 14px;
+  font-size: 0.85rem;
+}
+
+.routine-add {
+  margin-top: 12px;
+}
+
 .set-row .set-index {
   color: var(--text-muted);
   font-size: 0.8rem;
@@ -441,6 +481,214 @@ nav.tabbar .icon {
   text-align: center;
   padding: 32px 16px;
   color: var(--text-muted);
+}
+
+/* ===== HOY: navegador de fecha ===== */
+.date-nav {
+  gap: 8px;
+}
+
+.icon-btn {
+  width: 44px;
+  min-height: 44px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  border-radius: 10px;
+}
+
+.icon-btn:disabled {
+  opacity: 0.3;
+}
+
+.date-label {
+  flex: 1;
+  min-height: 44px;
+  background: transparent;
+  border: none;
+  color: var(--text);
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: capitalize;
+}
+
+/* ===== HOY: héroe con aro de progreso ===== */
+.hero-card {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 20px 18px;
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  margin-bottom: 12px;
+}
+
+.progress-ring {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.progress-ring-center {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+}
+
+.hero-pct {
+  font-size: 1.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.hero-sub {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+
+.hero-side {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.hero-streak {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--accent);
+}
+
+.hero-streak > div {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+}
+
+.hero-streak strong {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-streak span {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+}
+
+.hero-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tier-badge,
+.points-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.tier-badge.tier-perfect {
+  color: var(--warning);
+  border-color: color-mix(in srgb, var(--warning) 50%, var(--border));
+}
+
+.tier-badge.tier-great {
+  color: var(--accent);
+  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
+}
+
+.points-badge {
+  background: color-mix(in srgb, var(--accent) 14%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  color: var(--accent);
+}
+
+/* ===== HOY: tira de la semana ===== */
+.week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 8px 0 6px;
+  min-height: unset;
+  background: transparent;
+  border: none;
+}
+
+.week-dot {
+  width: 100%;
+  aspect-ratio: 1;
+  max-width: 42px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  border: 1.5px solid var(--border);
+  color: var(--text-muted);
+  background: var(--bg-elevated);
+  transition: transform 0.1s ease;
+}
+
+.week-day.tier-perfect .week-dot {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.week-day.tier-great .week-dot {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.week-day.tier-half .week-dot {
+  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
+  color: var(--text);
+}
+
+.week-day.selected .week-dot {
+  transform: scale(1.12);
+  box-shadow: 0 0 0 2px var(--bg), 0 0 0 3.5px var(--accent);
+}
+
+.week-label {
+  font-size: 0.66rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.week-day.selected .week-label {
+  color: var(--accent);
+  font-weight: 700;
 }
 
 .score-card {

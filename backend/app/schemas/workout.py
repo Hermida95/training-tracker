@@ -1,6 +1,6 @@
 import datetime
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 from app.models.workout import WorkoutType
 
@@ -66,6 +66,23 @@ class ExerciseTemplateRead(BaseModel):
     order: int
     target_sets: int
     target_reps: str
+    base_weight_kg: float | None = None
+
+
+class ExerciseTemplateCreate(BaseModel):
+    workout_type: WorkoutType
+    name: str = Field(min_length=1, max_length=80)
+    order: int | None = None  # None = al final de su día
+    target_sets: int = Field(default=3, ge=1, le=10)
+    target_reps: str = Field(default="", max_length=20)
+    base_weight_kg: float | None = None
+
+
+class ExerciseTemplateUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=80)
+    order: int | None = None
+    target_sets: int | None = Field(default=None, ge=1, le=10)
+    target_reps: str | None = Field(default=None, max_length=20)
     base_weight_kg: float | None = None
 
 

@@ -15,12 +15,14 @@ PostgreSQL &nbsp;|&nbsp; React 18 · Vite · TypeScript · PWA + Service Worker
 
 ## Funcionalidades
 
-- 🏋️ **Entreno**: rutina precargada (GYM 1/2/3 + running Z2), registro de series
-  en 2 toques, comparación automática con la sesión anterior del mismo tipo, y
-  ciclo de periodización S1 RIR 3 → S4 descarga visible en la UI
-- ✅ **Hábitos**: checklist según el día de la semana, hábitos personalizables
-  (booleanos o con objetivo numérico), rachas por hábito y puntuación diaria por
-  niveles (100% = día perfecto ⭐)
+- 🏋️ **Entreno**: rutina precargada editable (cada usuario construye la suya:
+  añade/quita ejercicios, pesos, series), **autoguardado ejercicio a ejercicio**
+  (si la app se cierra a media sesión no se pierde nada), registro de series en
+  2 toques, comparación con la sesión anterior y periodización S1 RIR 3 → S4
+  descarga visible en la UI
+- ✅ **Hábitos**: pantalla HOY gamificada con aro de progreso, racha y tira de la
+  semana; checklist según el día, hábitos personalizables (booleanos o con
+  objetivo numérico), **edición de días pasados** y puntuación diaria por niveles
 - 📈 **Progreso**: peso y cintura con media móvil semanal (recharts), resumen
   mensual y export JSON/texto para pegar a un coach IA
 - ⏰ **Alarma antisedentarismo**: notificaciones locales programadas cada 45-50

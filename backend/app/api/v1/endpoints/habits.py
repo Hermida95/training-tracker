@@ -13,7 +13,7 @@ from app.schemas.habit import (
     HabitUpdate,
     HabitWithStatus,
 )
-from app.utils.day_score import compute_day_score
+from app.utils.day_score import compute_day_score, compute_score_history
 from app.utils.streak import compute_streak
 from app.utils.timezone import today_local
 
@@ -55,6 +55,15 @@ def habits_today(db: DbSession, user: CurrentUser, date: datetime.date | None = 
 def day_score(db: DbSession, user: CurrentUser, date: datetime.date | None = None):
     """Puntos del día (100%=3, >=75%=2, >=50%=1) y racha de días >=75%."""
     return compute_day_score(db, user.id, date or today_local())
+
+
+@router.get("/score/history", response_model=list[DayScore])
+def score_history(
+    db: DbSession, user: CurrentUser, end: datetime.date | None = None, days: int = 7
+):
+    """Nivel de cada uno de los últimos `days` días, para la tira semanal de HOY."""
+    days = max(1, min(days, 31))
+    return compute_score_history(db, user.id, end or today_local(), days)
 
 
 @router.get("/{habit_id}", response_model=HabitRead)

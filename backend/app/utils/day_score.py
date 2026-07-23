@@ -94,3 +94,35 @@ def compute_day_score(db: Session, user_id: int, as_of: datetime.date) -> DaySco
         tier=tier,
         streak=streak,
     )
+
+
+def compute_score_history(
+    db: Session, user_id: int, end: datetime.date, days: int
+) -> list[DayScore]:
+    """Puntuación de los últimos `days` días (para la tira semanal de HOY).
+
+    Carga hábitos y logs UNA vez para todo el rango en vez de recalcular por
+    día. `streak` va a 0: la tira solo pinta el nivel de cada día; la racha
+    real la da `compute_day_score` para el día seleccionado.
+    """
+    habits = habit_crud.list_habits(db, user_id)
+    start = end - datetime.timedelta(days=days - 1)
+    logs_by_day = _logs_by_day(habit_crud.list_all_logs_in_range(db, user_id, start, end))
+
+    history = []
+    for offset in range(days):
+        day = start + datetime.timedelta(days=offset)
+        due, done, rate = day_completion(habits, logs_by_day, day)
+        points, tier = points_for_rate(rate)
+        history.append(
+            DayScore(
+                date=day,
+                due_count=due,
+                done_count=done,
+                completion_rate=round(rate, 3) if rate is not None else None,
+                points=points,
+                tier=tier,
+                streak=0,
+            )
+        )
+    return history

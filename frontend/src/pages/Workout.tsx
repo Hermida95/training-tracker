@@ -1,17 +1,18 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { workoutsApi } from "../api/workouts";
+import { RoutineEditor } from "../components/RoutineEditor";
 import { Stepper } from "../components/Stepper";
 import type {
   ExerciseTemplate,
   PeriodizationInfo,
   SessionComparison,
+  WorkoutSession,
   WorkoutSet,
   WorkoutType,
 } from "../types";
 import { todayIsoMadrid as todayIso, weekdayMadrid } from "../utils/date";
 
-// Sugerencia por defecto según el día de la semana (Lun=0 ... Dom=6),
-// siguiendo el checklist del spec: L/X/V gym, Sáb running.
+// Sugerencia por defecto según el día de la semana (Lun=0 ... Dom=6).
 const SUGGESTED_TYPE: Record<number, WorkoutType | null> = {
   0: "GYM1",
   1: null,
@@ -31,9 +32,12 @@ const TYPE_LABEL: Record<WorkoutType, string> = {
 };
 
 interface DraftExercise {
-  template: ExerciseTemplate;
+  name: string;
+  templateId: number | null;
   sets: WorkoutSet[];
 }
+
+type SaveState = "idle" | "saving" | "saved" | "error";
 
 export default function Workout() {
   const [workoutType, setWorkoutType] = useState<WorkoutType>(
@@ -44,39 +48,131 @@ export default function Workout() {
   const [runningMinutes, setRunningMinutes] = useState<number | null>(null);
   const [runningFeeling, setRunningFeeling] = useState<number | null>(null);
   const [comparison, setComparison] = useState<SessionComparison | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [savedSessionId, setSavedSessionId] = useState<number | null>(null);
+  const [sessionId, setSessionId] = useState<number | null>(null);
+  const [saveState, setSaveState] = useState<SaveState>("idle");
+  const [editingRoutine, setEditingRoutine] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Evita que el primer render (que rellena el draft) dispare un autosave.
+  const hydrated = useRef(false);
+  const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const buildDraftFromTemplates = (templates: ExerciseTemplate[], p: PeriodizationInfo) => {
+    const adjust = (base: number | null) =>
+      base === null ? null : Math.round((base + p.weight_adjustment_kg) * 100) / 100;
+    return templates.map((t) => ({
+      name: t.name,
+      templateId: t.id,
+      sets: Array.from({ length: t.target_sets }, (_, i) => ({
+        set_number: i + 1,
+        weight_kg: adjust(t.base_weight_kg),
+        reps: null,
+      })),
+    }));
+  };
+
+  const draftFromSession = (session: WorkoutSession): DraftExercise[] =>
+    session.exercises.map((ex) => ({
+      name: ex.name,
+      templateId: ex.exercise_template_id,
+      sets: ex.sets.map((s) => ({
+        set_number: s.set_number,
+        weight_kg: s.weight_kg,
+        reps: s.reps,
+      })),
+    }));
+
+  // Carga inicial al cambiar de tipo: reanuda la sesión de hoy si existe,
+  // o construye el borrador desde la rutina (plantillas) del usuario.
+  const loadForType = useCallback(async () => {
+    hydrated.current = false;
+    setLoading(true);
+    setComparison(null);
+    setSaveState("idle");
+
+    const [p, existing] = await Promise.all([
+      workoutsApi.periodization(todayIso()),
+      workoutsApi.list({ workout_type: workoutType, start: todayIso(), end: todayIso(), limit: 1 }),
+    ]);
+    setPeriodization(p);
+
+    if (existing.length > 0) {
+      // Ya había una sesión de hoy de este tipo: la reanudamos (autosave previo).
+      const session = existing[0];
+      setSessionId(session.id);
+      setDraft(draftFromSession(session));
+      setRunningMinutes(session.running_minutes);
+      setRunningFeeling(session.running_feeling);
+      setSaveState("saved");
+    } else {
+      setSessionId(null);
+      setRunningMinutes(null);
+      setRunningFeeling(null);
+      if (workoutType === "RUNNING" || workoutType === "CUSTOM") {
+        setDraft([]);
+      } else {
+        const templates = await workoutsApi.templates(workoutType);
+        setDraft(buildDraftFromTemplates(templates, p));
+      }
+    }
+    setLoading(false);
+    // Dejamos que el efecto de hidratación marque hydrated tras pintar.
+  }, [workoutType]);
 
   useEffect(() => {
-    setComparison(null);
-    setSavedSessionId(null);
+    loadForType();
+  }, [loadForType]);
 
-    if (workoutType === "RUNNING" || workoutType === "CUSTOM") {
-      workoutsApi.periodization(todayIso()).then(setPeriodization);
-      setDraft([]);
+  const buildPayload = useCallback(
+    () => ({
+      date: todayIso(),
+      workout_type: workoutType,
+      running_minutes: workoutType === "RUNNING" ? runningMinutes : null,
+      running_feeling: workoutType === "RUNNING" ? runningFeeling : null,
+      exercises:
+        workoutType === "RUNNING"
+          ? []
+          : draft.map((d, i) => ({
+              name: d.name,
+              order: i + 1,
+              exercise_template_id: d.templateId,
+              sets: d.sets,
+            })),
+    }),
+    [workoutType, runningMinutes, runningFeeling, draft]
+  );
+
+  // Autosave: cada cambio del borrador se persiste (debounced). Crea la sesión
+  // en la primera escritura y luego la actualiza. Así, si la app se cierra a
+  // media sesión, lo registrado hasta ese momento NO se pierde.
+  useEffect(() => {
+    if (loading) return;
+    if (!hydrated.current) {
+      // Primer render tras cargar: no guardamos todavía (nada ha cambiado).
+      hydrated.current = true;
       return;
     }
-
-    Promise.all([
-      workoutsApi.periodization(todayIso()),
-      workoutsApi.templates(workoutType),
-    ]).then(([p, templates]) => {
-      setPeriodization(p);
-      const adjust = (base: number | null) =>
-        base === null ? null : Math.round((base + p.weight_adjustment_kg) * 100) / 100;
-
-      setDraft(
-        templates.map((t) => ({
-          template: t,
-          sets: Array.from({ length: t.target_sets }, (_, i) => ({
-            set_number: i + 1,
-            weight_kg: adjust(t.base_weight_kg),
-            reps: null,
-          })),
-        }))
-      );
-    });
-  }, [workoutType]);
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    setSaveState("saving");
+    saveTimer.current = setTimeout(async () => {
+      try {
+        const payload = buildPayload();
+        if (sessionId === null) {
+          const created = await workoutsApi.create(payload);
+          setSessionId(created.id);
+        } else {
+          await workoutsApi.update(sessionId, payload);
+        }
+        setSaveState("saved");
+      } catch {
+        setSaveState("error");
+      }
+    }, 800);
+    return () => {
+      if (saveTimer.current) clearTimeout(saveTimer.current);
+    };
+    // buildPayload cambia con cualquier edición del borrador -> re-guarda.
+  }, [buildPayload, loading, sessionId]);
 
   const updateSet = (exIndex: number, setIndex: number, patch: Partial<WorkoutSet>) => {
     setDraft((prev) => {
@@ -88,44 +184,49 @@ export default function Workout() {
     });
   };
 
-  const save = async () => {
-    setSaving(true);
+  const finish = async () => {
+    // Fuerza un guardado inmediato y trae la comparación con la sesión anterior.
+    if (saveTimer.current) clearTimeout(saveTimer.current);
+    setSaveState("saving");
     try {
-      const exercises =
-        workoutType === "RUNNING"
-          ? []
-          : draft.map((d, i) => ({
-              name: d.template.name,
-              order: i + 1,
-              exercise_template_id: d.template.id,
-              sets: d.sets,
-            }));
-
-      const session = await workoutsApi.create({
-        date: todayIso(),
-        workout_type: workoutType,
-        running_minutes: workoutType === "RUNNING" ? runningMinutes : null,
-        running_feeling: workoutType === "RUNNING" ? runningFeeling : null,
-        exercises,
-      });
-      setSavedSessionId(session.id);
+      const payload = buildPayload();
+      const session =
+        sessionId === null
+          ? await workoutsApi.create(payload)
+          : await workoutsApi.update(sessionId, payload);
+      setSessionId(session.id);
+      setSaveState("saved");
       if (workoutType !== "RUNNING") {
-        const cmp = await workoutsApi.comparison(session.id);
-        setComparison(cmp);
+        setComparison(await workoutsApi.comparison(session.id));
       }
-    } finally {
-      setSaving(false);
+    } catch {
+      setSaveState("error");
     }
+  };
+
+  const saveLabel: Record<SaveState, string> = {
+    idle: "",
+    saving: "Guardando…",
+    saved: "Guardado ✓",
+    error: "Error al guardar",
   };
 
   return (
     <div>
       <div className="top-bar">
         <h1>Entreno</h1>
+        {saveState !== "idle" && (
+          <span className={`pill ${saveState === "error" ? "warn" : "ok"}`}>
+            {saveLabel[saveState]}
+          </span>
+        )}
       </div>
       <main>
         <div className="card">
-          <select value={workoutType} onChange={(e) => setWorkoutType(e.target.value as WorkoutType)}>
+          <select
+            value={workoutType}
+            onChange={(e) => setWorkoutType(e.target.value as WorkoutType)}
+          >
             {(Object.keys(TYPE_LABEL) as WorkoutType[]).map((t) => (
               <option key={t} value={t}>
                 {TYPE_LABEL[t]}
@@ -137,13 +238,32 @@ export default function Workout() {
               {periodization.label} · {periodization.rir_target}
               {periodization.weight_adjustment_kg !== 0 &&
                 ` · +${periodization.weight_adjustment_kg}kg`}
-              {periodization.set_adjustment !== 0 &&
-                ` · ${periodization.set_adjustment} series`}
+              {periodization.set_adjustment !== 0 && ` · ${periodization.set_adjustment} series`}
             </p>
+          )}
+          {workoutType !== "RUNNING" && (
+            <button
+              className="ghost"
+              style={{ width: "100%", marginTop: 10 }}
+              onClick={() => setEditingRoutine((v) => !v)}
+            >
+              {editingRoutine ? "Cerrar editor" : "Editar rutina"}
+            </button>
           )}
         </div>
 
-        {workoutType === "RUNNING" ? (
+        {editingRoutine && workoutType !== "RUNNING" ? (
+          <RoutineEditor
+            workoutType={workoutType}
+            typeLabel={TYPE_LABEL[workoutType]}
+            onClose={() => {
+              setEditingRoutine(false);
+              loadForType();
+            }}
+          />
+        ) : loading ? (
+          <p className="empty-state">Cargando…</p>
+        ) : workoutType === "RUNNING" ? (
           <div className="card">
             <h2>Running Z2</h2>
             <label>Minutos</label>
@@ -161,13 +281,16 @@ export default function Workout() {
               ))}
             </div>
           </div>
+        ) : draft.length === 0 ? (
+          <div className="card">
+            <p className="empty-state">
+              Esta rutina no tiene ejercicios todavía. Pulsa "Editar rutina" para añadirlos.
+            </p>
+          </div>
         ) : (
           draft.map((d, exIndex) => (
-            <div className="card" key={d.template.id}>
-              <h2>
-                {d.template.name}{" "}
-                <span style={{ fontWeight: 400 }}>· {d.template.target_reps}</span>
-              </h2>
+            <div className="card" key={`${d.name}-${exIndex}`}>
+              <h2>{d.name}</h2>
               {d.sets.map((set, setIndex) => (
                 <div className="set-row" key={set.set_number}>
                   <span className="set-index">{set.set_number}</span>
@@ -189,12 +312,10 @@ export default function Workout() {
           ))
         )}
 
-        <button className="primary big" onClick={save} disabled={saving}>
-          {saving ? "Guardando…" : "Guardar sesión"}
-        </button>
-
-        {savedSessionId && !comparison && workoutType === "RUNNING" && (
-          <p style={{ marginTop: 12 }}>Sesión guardada ✓</p>
+        {!editingRoutine && !loading && (
+          <button className="primary big" onClick={finish}>
+            Terminar y comparar
+          </button>
         )}
 
         {comparison && (

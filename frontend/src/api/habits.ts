@@ -15,6 +15,8 @@ export const habitsApi = {
   today: (date?: string) =>
     api.get<HabitWithStatus[]>(`/habits/today${date ? `?date=${date}` : ""}`),
   score: (date?: string) => api.get<DayScore>(`/habits/score${date ? `?date=${date}` : ""}`),
+  scoreHistory: (end: string, days = 7) =>
+    api.get<DayScore[]>(`/habits/score/history?end=${end}&days=${days}`),
   list: () => api.get<Habit[]>("/habits"),
   create: (payload: HabitCreatePayload) => api.post<Habit>("/habits", payload),
   update: (habitId: number, patch: Partial<Pick<Habit, "name" | "target_value" | "unit" | "active_days" | "sort_order">>) =>
