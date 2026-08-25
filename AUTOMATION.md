@@ -11,14 +11,19 @@ Actions:
    headless, sin factura de API— que actúa de entrenador y genera el plan de
    los próximos 7 días.
 3. Escribe ese plan en tu cuenta (tabla `planned_workouts`), y lo ves en **HOY**
-   como "Hoy toca …".
+   como "Hoy toca …" y en el nuevo "Plan de la semana" (con opción de mover o
+   intercambiar días si alguno no puede ser).
+4. Si configuraste Gmail (opcional, ver secreto 5-6), te manda un **informe
+   breve por email**: cómo fue la semana que termina (entrenos completados,
+   km reales, recuperación) y el ajuste decidido para la que empieza.
 
 ```
 GitHub Actions (dom 20:00) ─▶ app/automation/weekly_plan.py
         │                          │  1. Garmin  (garminconnect + tokens)
         │                          │  2. Claude  (claude -p, tu Pro)
         │                          ▼
-        └──────────────────▶  Neon (planned_workouts)  ─▶  se ve en HOY
+        ├──────────────────▶  Neon (planned_workouts)  ─▶  se ve en HOY
+        └──────────────────▶  Gmail (informe semanal, opcional)
 ```
 
 **Coste: 0 €.** Actions es gratis, Neon es gratis, y la IA va dentro de tu Pro.
@@ -30,7 +35,9 @@ relanzarlo a mano: repo → **Actions → Weekly plan → Run workflow**.
 
 ## Puesta en marcha (una vez, ~15 min)
 
-Todo son **4 secretos** que configuras tú en GitHub
+Los 4 primeros secretos son obligatorios; los dos de Gmail son opcionales
+(sin ellos, todo funciona igual salvo que no llega el informe por email).
+Los configuras tú en GitHub
 (*Settings → Secrets and variables → Actions → New repository secret*).
 Nunca pegues credenciales en el chat ni en el código.
 
@@ -76,6 +83,23 @@ tar -czf - -C "$HOME/.garminconnect" . | base64 | pbcopy
 
 > Cuando los tokens caduquen (~6 meses) o dejen de funcionar, vuelve a
 > generarlos con tu MCP/login de Garmin y repite este paso.
+
+### 5-6. `GMAIL_ADDRESS` / `GMAIL_APP_PASSWORD` — informe semanal (opcional)
+
+Sin servicio nuevo ni factura: se envía por SMTP con tu propia cuenta de
+Gmail, de ti para ti.
+
+1. Activa la verificación en dos pasos en tu cuenta de Google, si no la
+   tienes ya (la requiere Gmail para generar contraseñas de aplicación).
+2. Ve a [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
+   y genera una contraseña de aplicación nueva (cualquier nombre, p. ej.
+   "CIMA weekly report"). Son 16 caracteres sin espacios.
+3. `GMAIL_ADDRESS` = tu dirección de Gmail. `GMAIL_APP_PASSWORD` = esos 16
+   caracteres (no tu contraseña normal de Google, esa no funcionaría aquí).
+
+El email llega a la misma cuenta que lo envía. Si algún domingo el envío
+falla (credenciales caducadas, límite de Gmail...), no afecta al plan: ya se
+ha escrito en la app antes de intentar mandar el correo.
 
 ---
 

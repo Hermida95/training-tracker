@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from app.automation import coach, macro, weekly_plan
+from app.automation import coach, email_report, macro, weekly_plan
 from app.automation.garmin_metrics import WeeklyMetrics, _parse_activity, stub
 
 MADRID = ZoneInfo("Europe/Madrid")
@@ -171,3 +171,43 @@ def test_prompt_summary_includes_real_activities():
 def test_prompt_summary_placeholder_when_no_activities():
     summary = WeeklyMetrics().to_prompt_summary()
     assert "(sin actividades registradas esta semana)" in summary
+
+
+# --- Informe semanal por email ---
+
+
+def _plan_with_note(note: str = "Semana de recalibración de FC.") -> dict:
+    plan = _valid_plan()
+    plan["coach_note"] = note
+    return plan
+
+
+def test_build_report_body_includes_key_sections():
+    body = email_report.build_report_body(
+        stub(), _plan_with_note(), datetime.date(2026, 8, 31), planned_count=6, completed_count=4
+    )
+    assert "4/6 planificados" in body
+    assert "8.0 km" in body  # de las actividades del stub
+    assert "HRV balanced" in body
+    assert "Semana de recalibración de FC." in body
+    assert "Lunes: Día 0 (GYM1)" in body
+    assert "Domingo: Día 6 (descanso)" in body
+
+
+def test_build_report_body_without_plan_that_week():
+    body = email_report.build_report_body(
+        stub(), _plan_with_note(), datetime.date(2026, 8, 31), planned_count=0, completed_count=2
+    )
+    assert "2 (sin plan generado esa semana)" in body
+
+
+def test_send_weekly_email_uses_injected_sender_and_defaults_to_self():
+    calls = []
+
+    def fake_sender(address, app_password, to_addr, subject, body_text):
+        calls.append((address, app_password, to_addr, subject, body_text))
+
+    email_report.send_weekly_email(
+        "yo@example.com", "app-pw", "Asunto", "Cuerpo", sender=fake_sender
+    )
+    assert calls == [("yo@example.com", "app-pw", "yo@example.com", "Asunto", "Cuerpo")]

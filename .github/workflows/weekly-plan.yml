@@ -16,6 +16,8 @@
 #   PLAN_USER_EMAIL          tu email de la app (a qué cuenta escribir el plan)
 #   CLAUDE_CODE_OAUTH_TOKEN  token de tu suscripción (crear con: claude setup-token)
 #   GARMIN_TOKENS_B64        base64 del directorio de tokens de Garmin (ver AUTOMATION.md)
+#   GMAIL_ADDRESS            tu Gmail, para el informe semanal (opcional, ver AUTOMATION.md)
+#   GMAIL_APP_PASSWORD       contraseña de aplicación de esa cuenta (opcional, ídem)
 
 name: Weekly plan
 
@@ -65,6 +67,8 @@ jobs:
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           GARMINTOKENS: /home/runner/.garminconnect
           PLAN_USER_EMAIL: ${{ secrets.PLAN_USER_EMAIL }}
+          GMAIL_ADDRESS: ${{ secrets.GMAIL_ADDRESS }}
+          GMAIL_APP_PASSWORD: ${{ secrets.GMAIL_APP_PASSWORD }}
           # En dispatch manual respetamos el input force (default true); en cron, no.
           FORCE_FLAG: ${{ github.event_name == 'workflow_dispatch' && inputs.force && '--force' || '' }}
         run: |

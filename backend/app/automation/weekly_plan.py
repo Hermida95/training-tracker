@@ -3,11 +3,14 @@
 Pensado para correr los domingos a las 20:00 (Europe/Madrid) desde GitHub
 Actions. Flujo:
   1. Comprueba que "toca" ejecutar (domingo por la tarde en Madrid), salvo --force.
-  2. Extrae métricas de recuperación de los últimos 7 días de Garmin.
+  2. Extrae recuperación y actividades reales de los últimos 7 días de Garmin.
   3. Le pide a Claude (vía Claude Code headless, dentro del plan Pro) el plan
      de los próximos 7 días en JSON estricto.
   4. Escribe ese plan en la BD del usuario (tabla planned_workouts), reemplazando
      la semana entrante.
+  5. Si hay credenciales de Gmail configuradas, envía un informe breve por
+     email (cómo fue la semana que termina + el ajuste decidido). Es un
+     extra: si falla, no tumba el resto del pipeline (el plan ya se escribió).
 
 Uso:
   python -m app.automation.weekly_plan <email>              # ejecución real
@@ -18,14 +21,16 @@ Uso:
 
 import argparse
 import datetime
+import os
 import sys
 from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 
-from app.automation import coach, garmin_metrics, macro
+from app.automation import coach, email_report, garmin_metrics, macro
 from app.core.database import SessionLocal
 from app.crud import planned as planned_crud
+from app.crud import workout as workout_crud
 from app.models.user import User
 from app.schemas.planned import PlannedWorkoutIn, WeekPlanReplace
 from app.utils.app_settings import MACRO_START_DATE_KEY, get_setting
@@ -77,8 +82,26 @@ def _macro_week_info(db, user_id: int, week_start: datetime.date):
     return macro.get_week(n), n
 
 
+def _prev_week_adherence(db, user_id: int, week_start: datetime.date) -> tuple[int, int]:
+    """(días con entreno prescrito, sesiones completadas) de la semana que
+    ACABA (la anterior a `week_start`, que es el lunes que viene)."""
+    prev_start = week_start - datetime.timedelta(days=7)
+    prev_end = week_start - datetime.timedelta(days=1)
+    prev_planned = planned_crud.list_planned(db, user_id, prev_start, prev_end)
+    planned_count = sum(1 for p in prev_planned if p.workout_type is not None)
+    prev_sessions = workout_crud.list_sessions(db, user_id, start=prev_start, end=prev_end)
+    completed_count = sum(1 for s in prev_sessions if s.completed)
+    return planned_count, completed_count
+
+
 def plan_and_write(
-    email: str, week_start: datetime.date, *, dry_run: bool, stub_metrics: bool
+    email: str,
+    week_start: datetime.date,
+    *,
+    dry_run: bool,
+    stub_metrics: bool,
+    gmail_address: str | None = None,
+    gmail_app_password: str | None = None,
 ) -> int:
     """Genera el plan de `week_start` (con la semana del macrociclo que toque) y
     lo escribe. Reutilizado por el cron (semana siguiente) y el bootstrap
@@ -108,12 +131,34 @@ def plan_and_write(
         for d in plan["days"]:
             print(f"  d{d['weekday']} · {d.get('workout_type') or 'descanso'} · {d['title']}")
 
+        planned_count, completed_count = (
+            _prev_week_adherence(db, user.id, week_start) if user else (0, 0)
+        )
+        report_body = email_report.build_report_body(
+            metrics, plan, week_start, planned_count, completed_count
+        )
+        print(f"\n--- Informe semanal ---\n{report_body}\n")
+
         if dry_run:
-            print("\n[dry-run] No se escribe nada en la BD.")
+            print("[dry-run] No se escribe nada en la BD ni se envía el email.")
             return 0
 
         rows = planned_crud.replace_week(db, user.id, _plan_to_week_replace(plan, week_start))
         print(f"\nPlan escrito: {len(rows)} días planificados para {email}.")
+
+        if gmail_address and gmail_app_password:
+            try:
+                email_report.send_weekly_email(
+                    gmail_address,
+                    gmail_app_password,
+                    f"CIMA — informe semanal ({week_start.isoformat()})",
+                    report_body,
+                )
+                print("Informe semanal enviado por email.")
+            except Exception as e:  # noqa: BLE001 - el email es un extra, no debe tumbar el run
+                print(f"No se pudo enviar el email semanal: {e}", file=sys.stderr)
+        else:
+            print("GMAIL_ADDRESS/GMAIL_APP_PASSWORD no configurados: no se envía email semanal.")
     finally:
         db.close()
     return 0
@@ -125,7 +170,14 @@ def run(email: str, *, force: bool, dry_run: bool, stub_metrics: bool) -> int:
         return 0
     week_start = next_monday(datetime.datetime.now(TZ).date())
     print(f"Planificando la semana del {week_start.isoformat()} para {email}")
-    return plan_and_write(email, week_start, dry_run=dry_run, stub_metrics=stub_metrics)
+    return plan_and_write(
+        email,
+        week_start,
+        dry_run=dry_run,
+        stub_metrics=stub_metrics,
+        gmail_address=os.environ.get("GMAIL_ADDRESS"),
+        gmail_app_password=os.environ.get("GMAIL_APP_PASSWORD"),
+    )
 
 
 def main() -> None:
