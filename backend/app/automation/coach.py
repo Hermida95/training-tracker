@@ -14,32 +14,38 @@ import json
 import subprocess
 
 from app.automation.garmin_metrics import WeeklyMetrics
+from app.automation.macro import FC_RECALIBRATION, MACRO_RULES, WeekInfo
 from app.models.workout import WorkoutType
 
 # Tipos válidos que el plan puede asignar a un día (o null para descanso).
 _VALID_TYPES = {t.value for t in WorkoutType} | {None}
 
-SYSTEM_CONTEXT = """\
-Eres el entrenador personal de Miguel. Objetivo del bloque: base aeróbica y
-volumen de trail/ultra manteniendo y subiendo fuerza (plan híbrido Fuerza +
-Trail/Ultra, fase de base). Reglas innegociables:
-- 80/20: la gran mayoría de la carrera es Zona 2 (fácil, poder hablar).
-- Subida de volumen semanal suave (<=10%), con descarga cada 4 semanas.
-- La fuerza no se sacrifica; el viernes es empuje/hombro + core con piernas
-  descargadas para dejar el sábado (tirada larga) con piernas frescas.
-Estructura tipo de la semana:
-- Lunes: Gym A (fuerza tren inferior + empuje)  -> workout_type "GYM1"
-- Martes: rodaje fácil corto Z2                  -> workout_type "RUNNING"
-- Miércoles: Gym B (cadena posterior + tracción) -> workout_type "GYM2"
-- Jueves: rodaje fácil medio (cuestas suaves)    -> workout_type "RUNNING"
-- Viernes: Gym C (empuje/hombro + core)          -> workout_type "GYM3"
-- Sábado: TIRADA LARGA Z2 (sesión clave)         -> workout_type "RUNNING"
-- Domingo: descanso activo (paseo + McGill Big 3)-> workout_type null
-Ajusta la carga de la semana a las métricas de recuperación: si HRV/readiness/
-sueño están bajos o la carga aguda alta, baja volumen e intensidad (más Z2,
-menos series/peso, o convierte un rodaje en descanso). Si están altos, progresa
-con prudencia. Los ejercicios concretos de gym ya están en la app; tú decides
-el ENFOQUE y los tiempos de carrera, no listas de ejercicios.
+SYSTEM_CONTEXT = f"""\
+Eres el entrenador personal de Miguel. Sigues un PLAN MAESTRO de 6 meses
+(Fuerza + Trail/Ultra); tu trabajo cada domingo es concretar la semana que toca
+del macrociclo, ajustándola a cómo ha respondido según las métricas de Garmin.
+
+{MACRO_RULES}
+
+{FC_RECALIBRATION}
+
+Estructura fija de la semana:
+- Lunes: Gym A (fuerza tren inferior + empuje)   -> workout_type "GYM1"
+- Martes: rodaje fácil Z2                          -> workout_type "RUNNING"
+- Miércoles: Gym B (cadena posterior + tracción)  -> workout_type "GYM2"
+- Jueves: rodaje fácil Z2 (cuestas según semana)  -> workout_type "RUNNING"
+- Viernes: Gym C (empuje/hombro + core)           -> workout_type "GYM3"
+- Sábado: TIRADA LARGA (sesión clave)             -> workout_type "RUNNING"
+- Domingo: descanso activo (paseo + McGill Big 3) -> workout_type null
+  (en bloques con back-to-back, el domingo pasa a "RUNNING" según indique la semana)
+
+Concreta la semana según sus objetivos (que te doy abajo) y AJÚSTALA a la
+recuperación: si HRV/sueño/readiness están bajos o la carga aguda alta, recorta
+(más Z2, menos series, o convierte un rodaje en descanso); si están altos,
+progresa con prudencia sin saltarte el techo de +10%. Los ejercicios concretos
+de gym ya están en la app; tú decides el ENFOQUE, los tiempos/topes de carrera
+y el RIR, no listas de ejercicios. En `details` de cada día, sé concreto y
+accionable (tope de FC, duración, RIR, recordatorios).
 """
 
 OUTPUT_INSTRUCTIONS = """\
@@ -60,9 +66,12 @@ markdown) con esta forma EXACTA:
 """
 
 
-def _build_prompt(metrics: WeeklyMetrics, week_start: datetime.date) -> str:
+def _build_prompt(metrics: WeeklyMetrics, week_start: datetime.date, week: WeekInfo | None) -> str:
+    week_block = (
+        f"OBJETIVOS DE ESTA SEMANA (del plan maestro):\n{week.to_prompt()}\n\n" if week else ""
+    )
     return (
-        f"{SYSTEM_CONTEXT}\n\n{metrics.to_prompt_summary()}\n\n"
+        f"{SYSTEM_CONTEXT}\n\n{week_block}{metrics.to_prompt_summary()}\n\n"
         f"Planifica la semana que empieza el lunes {week_start.isoformat()}.\n\n"
         f"{OUTPUT_INSTRUCTIONS}"
     )
@@ -119,9 +128,14 @@ def _validate(plan: dict) -> None:
             raise ValueError("Falta title en un día")
 
 
-def generate_plan(metrics: WeeklyMetrics, week_start: datetime.date, runner=_run_claude) -> dict:
+def generate_plan(
+    metrics: WeeklyMetrics,
+    week_start: datetime.date,
+    week: WeekInfo | None = None,
+    runner=_run_claude,
+) -> dict:
     """Devuelve el plan validado. `runner` es inyectable para tests."""
-    prompt = _build_prompt(metrics, week_start)
+    prompt = _build_prompt(metrics, week_start, week)
     last_error: Exception | None = None
     for attempt in range(2):
         try:

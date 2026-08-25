@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 from app.models.app_setting import AppSetting
 
 PROGRAM_START_DATE_KEY = "program_start_date"
+MACRO_START_DATE_KEY = "macro_start_date"  # lunes de la semana 1 del macrociclo de 6 meses
 BREAK_INTERVAL_KEY = "break_interval_minutes"
 BREAK_WINDOW_START_KEY = "break_window_start"
 BREAK_WINDOW_END_KEY = "break_window_end"

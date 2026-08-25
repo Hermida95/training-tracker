@@ -4,7 +4,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from app.automation import coach, weekly_plan
+from app.automation import coach, macro, weekly_plan
 from app.automation.garmin_metrics import stub
 
 MADRID = ZoneInfo("Europe/Madrid")
@@ -56,6 +56,29 @@ def test_plan_maps_weekdays_to_dates():
     assert week.days[6].date == datetime.date(2026, 9, 6)  # domingo
     assert week.days[6].workout_type is None
     assert all(d.source == "ai" for d in week.days)
+
+
+# --- Macrociclo ---
+
+
+def test_macro_week_number_and_lookup():
+    start = datetime.date(2026, 8, 24)  # lunes semana 1
+    assert macro.week_number_for(start, datetime.date(2026, 8, 24)) == 1
+    assert macro.week_number_for(start, datetime.date(2026, 8, 31)) == 2
+    # semana 4 es descarga
+    assert macro.get_week(4).deload is True
+    # semanas 1-3 llevan tope de FC 148
+    assert macro.get_week(1).fc_cap == "148 ppm"
+    assert macro.get_week(5).fc_cap is None
+    # clamp fuera de rango
+    assert macro.get_week(99).week == 26
+
+
+def test_macro_week_info_injected_in_prompt():
+    week = macro.get_week(1)
+    prompt = coach._build_prompt(stub(), datetime.date(2026, 8, 24), week)
+    assert "Semana 1 del macrociclo" in prompt
+    assert "148 ppm" in prompt
 
 
 # --- Coach: validación y reintento con runner inyectado ---

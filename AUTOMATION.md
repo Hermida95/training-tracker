@@ -99,6 +99,28 @@ imprime el plan), `--stub-metrics` (métricas de ejemplo, sin Garmin).
 
 ---
 
+## El plan maestro de 6 meses
+
+El macrociclo completo (26 semanas: fases, progresión de volumen, tiradas
+largas, RIR, descargas cada 4 semanas y la recalibración de FC≤148) vive
+codificado en `app/automation/macro.py` — es la fuente única de verdad que sigue
+el coach. La semana en la que estás se calcula desde `macro_start_date` (lunes
+de la semana 1), guardado por usuario. Cada domingo el cron mira qué semana del
+macrociclo toca la semana siguiente y genera esa semana fiel al mapa, ajustada
+a tu recuperación.
+
+Se arranca una sola vez con:
+
+```bash
+GARMINTOKENS="$HOME/.garminconnect" DATABASE_URL="<neon>" \
+  python -m app.automation.bootstrap_macro <email> \
+    --macro-start 2026-08-24 \
+    --menu ~/Downloads/menu_semanal_deficit_82kg.md
+```
+
+Eso fija el inicio del macrociclo, carga el menú en la pestaña Menú y genera el
+plan de la semana en curso. A partir de ahí el cron continúa solo cada domingo.
+
 ## Cómo decide el plan
 
 El *system prompt* (en `app/automation/coach.py`) le da a Claude tu contexto:

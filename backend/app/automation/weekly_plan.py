@@ -23,11 +23,12 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 
-from app.automation import coach, garmin_metrics
+from app.automation import coach, garmin_metrics, macro
 from app.core.database import SessionLocal
 from app.crud import planned as planned_crud
 from app.models.user import User
 from app.schemas.planned import PlannedWorkoutIn, WeekPlanReplace
+from app.utils.app_settings import MACRO_START_DATE_KEY, get_setting
 
 TZ = ZoneInfo("Europe/Madrid")
 
@@ -65,46 +66,66 @@ def _plan_to_week_replace(plan: dict, week_start: datetime.date) -> WeekPlanRepl
     return WeekPlanReplace(week_start=week_start, days=days, source="ai")
 
 
-def run(email: str, *, force: bool, dry_run: bool, stub_metrics: bool) -> int:
-    if not force and not should_run_now():
-        print("No toca ejecutar ahora (no es domingo tarde en Madrid). Saliendo sin hacer nada.")
-        return 0
+def _macro_week_info(db, user_id: int, week_start: datetime.date):
+    """Info de la semana del macrociclo según macro_start_date del usuario.
 
+    Si no está fijada, trata la semana objetivo como la 1 (arranque del plan).
+    """
+    raw = get_setting(db, user_id, MACRO_START_DATE_KEY)
+    macro_start = datetime.date.fromisoformat(raw) if raw else week_start
+    n = macro.week_number_for(macro_start, week_start)
+    return macro.get_week(n), n
+
+
+def plan_and_write(
+    email: str, week_start: datetime.date, *, dry_run: bool, stub_metrics: bool
+) -> int:
+    """Genera el plan de `week_start` (con la semana del macrociclo que toque) y
+    lo escribe. Reutilizado por el cron (semana siguiente) y el bootstrap
+    (semana actual)."""
     today = datetime.datetime.now(TZ).date()
-    week_start = next_monday(today)
-    print(f"Planificando la semana del {week_start.isoformat()} para {email}")
 
-    # 1) Métricas
-    if stub_metrics:
-        metrics = garmin_metrics.stub()
-    else:
-        metrics = garmin_metrics.collect(garmin_metrics.tokenstore_path(), today)
+    metrics = (
+        garmin_metrics.stub()
+        if stub_metrics
+        else garmin_metrics.collect(garmin_metrics.tokenstore_path(), today)
+    )
     print(metrics.to_prompt_summary())
-
-    # 2) Plan con Claude
-    plan = coach.generate_plan(metrics, week_start)
-    if plan.get("coach_note"):
-        print(f"\nCoach: {plan['coach_note']}\n")
-    for d in plan["days"]:
-        print(f"  d{d['weekday']} · {d.get('workout_type') or 'descanso'} · {d['title']}")
-
-    # 3) Escribir
-    week = _plan_to_week_replace(plan, week_start)
-    if dry_run:
-        print("\n[dry-run] No se escribe nada en la BD.")
-        return 0
 
     db = SessionLocal()
     try:
         user = db.scalar(select(User).where(User.email == email.lower()))
-        if user is None:
+        if user is None and not dry_run:
             print(f"No existe la cuenta {email}", file=sys.stderr)
             return 1
-        rows = planned_crud.replace_week(db, user.id, week)
+
+        week_info, week_num = _macro_week_info(db, user.id if user else 0, week_start)
+        print(f"Semana {week_num} del macrociclo · {week_info.phase_block}")
+
+        plan = coach.generate_plan(metrics, week_start, week_info)
+        if plan.get("coach_note"):
+            print(f"\nCoach: {plan['coach_note']}\n")
+        for d in plan["days"]:
+            print(f"  d{d['weekday']} · {d.get('workout_type') or 'descanso'} · {d['title']}")
+
+        if dry_run:
+            print("\n[dry-run] No se escribe nada en la BD.")
+            return 0
+
+        rows = planned_crud.replace_week(db, user.id, _plan_to_week_replace(plan, week_start))
         print(f"\nPlan escrito: {len(rows)} días planificados para {email}.")
     finally:
         db.close()
     return 0
+
+
+def run(email: str, *, force: bool, dry_run: bool, stub_metrics: bool) -> int:
+    if not force and not should_run_now():
+        print("No toca ejecutar ahora (no es domingo tarde en Madrid). Saliendo sin hacer nada.")
+        return 0
+    week_start = next_monday(datetime.datetime.now(TZ).date())
+    print(f"Planificando la semana del {week_start.isoformat()} para {email}")
+    return plan_and_write(email, week_start, dry_run=dry_run, stub_metrics=stub_metrics)
 
 
 def main() -> None:
