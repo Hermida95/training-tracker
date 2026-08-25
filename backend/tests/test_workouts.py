@@ -1,3 +1,6 @@
+import datetime
+
+
 def _session_payload(date: str, weight: float):
     return {
         "date": date,
@@ -152,3 +155,90 @@ def test_periodization_endpoint_returns_valid_cycle_week(client):
     body = res.json()
     assert body["cycle_week"] in (1, 2, 3, 4)
     assert "rir_target" in body
+
+
+def test_running_session_stores_distance_and_shoe(client):
+    shoe = client.post("/api/v1/workouts/shoes", json={"name": "Salomon Ultra Glide"}).json()
+
+    res = client.post(
+        "/api/v1/workouts",
+        json={
+            "date": "2026-07-14",
+            "workout_type": "RUNNING",
+            "completed": True,
+            "running_distance_km": 12.5,
+            "shoe_id": shoe["id"],
+            "exercises": [],
+        },
+    )
+    assert res.status_code == 201
+    body = res.json()
+    assert body["running_distance_km"] == 12.5
+    assert body["shoe_id"] == shoe["id"]
+
+
+def test_shoe_crud(client):
+    created = client.post("/api/v1/workouts/shoes", json={"name": "Hoka Speedgoat"})
+    assert created.status_code == 201
+    shoe_id = created.json()["id"]
+    assert created.json()["retired"] is False
+
+    listed = client.get("/api/v1/workouts/shoes").json()
+    assert any(s["id"] == shoe_id for s in listed)
+
+    retired = client.patch(f"/api/v1/workouts/shoes/{shoe_id}", json={"retired": True})
+    assert retired.status_code == 200
+    assert retired.json()["retired"] is True
+
+    assert client.delete(f"/api/v1/workouts/shoes/{shoe_id}").status_code == 204
+    listed_after = client.get("/api/v1/workouts/shoes").json()
+    assert all(s["id"] != shoe_id for s in listed_after)
+    assert (
+        client.patch(f"/api/v1/workouts/shoes/{shoe_id}", json={"retired": True}).status_code == 404
+    )
+
+
+def test_running_stats_sums_only_completed_running_sessions_in_range(client):
+    today = datetime.date.today()
+    this_month = today.replace(day=1)
+    last_year = today.replace(year=today.year - 1, month=12, day=15)
+
+    # Cuenta: rodaje completado este mes
+    client.post(
+        "/api/v1/workouts",
+        json={
+            "date": this_month.isoformat(),
+            "workout_type": "RUNNING",
+            "completed": True,
+            "running_distance_km": 10,
+            "exercises": [],
+        },
+    )
+    # No cuenta: rodaje sin terminar (en curso)
+    client.post(
+        "/api/v1/workouts",
+        json={
+            "date": this_month.isoformat(),
+            "workout_type": "RUNNING",
+            "completed": False,
+            "running_distance_km": 99,
+            "exercises": [],
+        },
+    )
+    # No cuenta: sesión de gym, no de running
+    client.post("/api/v1/workouts", json=_session_payload(this_month.isoformat(), 80))
+    # No cuenta: año anterior, fuera del rango anual
+    client.post(
+        "/api/v1/workouts",
+        json={
+            "date": last_year.isoformat(),
+            "workout_type": "RUNNING",
+            "completed": True,
+            "running_distance_km": 50,
+            "exercises": [],
+        },
+    )
+
+    stats = client.get("/api/v1/workouts/running-stats").json()
+    assert stats["km_month"] == 10
+    assert stats["km_year"] == 10

@@ -35,6 +35,20 @@ class ExerciseTemplate(Base):
     base_weight_kg: Mapped[float | None] = mapped_column(default=None)
 
 
+class Shoe(Base):
+    """Un par de zapatillas de running del usuario, para saber con cuáles corrió cada rodaje."""
+
+    __tablename__ = "shoes"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    name: Mapped[str]
+    retired: Mapped[bool] = mapped_column(default=False)
+    created_at: Mapped[datetime.datetime] = mapped_column(
+        default=lambda: datetime.datetime.now(datetime.UTC)
+    )
+
+
 class WorkoutSession(Base):
     """Una sesión de entreno concreta (una fecha + un tipo)."""
 
@@ -51,6 +65,10 @@ class WorkoutSession(Base):
     notes: Mapped[str | None] = mapped_column(default=None)
     running_minutes: Mapped[int | None] = mapped_column(default=None)
     running_feeling: Mapped[int | None] = mapped_column(default=None)  # 1-5
+    running_distance_km: Mapped[float | None] = mapped_column(default=None)
+    shoe_id: Mapped[int | None] = mapped_column(
+        ForeignKey("shoes.id", ondelete="SET NULL"), default=None
+    )
     created_at: Mapped[datetime.datetime] = mapped_column(
         default=lambda: datetime.datetime.now(datetime.UTC)
     )
@@ -58,6 +76,7 @@ class WorkoutSession(Base):
     exercises: Mapped[list["WorkoutExercise"]] = relationship(
         back_populates="session", cascade="all, delete-orphan", order_by="WorkoutExercise.order"
     )
+    shoe: Mapped["Shoe | None"] = relationship()
 
 
 class WorkoutExercise(Base):

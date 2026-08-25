@@ -88,7 +88,7 @@ export default function Progress() {
                 <Line
                   type="monotone"
                   dataKey="cintura"
-                  stroke="#9c9184"
+                  stroke="#8b9096"
                   strokeWidth={2}
                   dot={false}
                 />

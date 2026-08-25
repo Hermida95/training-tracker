@@ -10,7 +10,11 @@ from app.schemas.workout import (
     ExerciseTemplateRead,
     ExerciseTemplateUpdate,
     PeriodizationInfo,
+    RunningStats,
     SessionComparison,
+    ShoeCreate,
+    ShoeRead,
+    ShoeUpdate,
     WorkoutSessionCreate,
     WorkoutSessionRead,
 )
@@ -19,6 +23,39 @@ from app.utils.periodization import compute_cycle_week, get_periodization_info
 from app.utils.timezone import today_local
 
 router = APIRouter(prefix="/workouts", tags=["workouts"])
+
+
+@router.get("/running-stats", response_model=RunningStats)
+def get_running_stats(db: DbSession, user: CurrentUser):
+    """Km acumulados este mes y este año, para la métrica motivadora del HOY."""
+    km_month, km_year = crud.running_km_totals(db, user.id, today_local())
+    return RunningStats(km_month=km_month, km_year=km_year)
+
+
+@router.get("/shoes", response_model=list[ShoeRead])
+def list_shoes(db: DbSession, user: CurrentUser):
+    return crud.list_shoes(db, user.id)
+
+
+@router.post("/shoes", response_model=ShoeRead, status_code=201)
+def create_shoe(data: ShoeCreate, db: DbSession, user: CurrentUser):
+    return crud.create_shoe(db, user.id, data)
+
+
+@router.patch("/shoes/{shoe_id}", response_model=ShoeRead)
+def update_shoe(shoe_id: int, data: ShoeUpdate, db: DbSession, user: CurrentUser):
+    shoe = crud.get_shoe(db, user.id, shoe_id)
+    if not shoe:
+        raise HTTPException(404, "Zapatilla no encontrada")
+    return crud.update_shoe(db, shoe, data)
+
+
+@router.delete("/shoes/{shoe_id}", status_code=204)
+def delete_shoe(shoe_id: int, db: DbSession, user: CurrentUser):
+    shoe = crud.get_shoe(db, user.id, shoe_id)
+    if not shoe:
+        raise HTTPException(404, "Zapatilla no encontrada")
+    crud.delete_shoe(db, shoe)
 
 
 @router.get("/templates", response_model=list[ExerciseTemplateRead])

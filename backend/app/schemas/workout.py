@@ -42,6 +42,8 @@ class WorkoutSessionCreate(BaseModel):
     notes: str | None = None
     running_minutes: int | None = None
     running_feeling: int | None = None
+    running_distance_km: float | None = None
+    shoe_id: int | None = None
     exercises: list[WorkoutExerciseIn] = []
 
 
@@ -56,7 +58,31 @@ class WorkoutSessionRead(BaseModel):
     notes: str | None = None
     running_minutes: int | None = None
     running_feeling: int | None = None
+    running_distance_km: float | None = None
+    shoe_id: int | None = None
     exercises: list[WorkoutExerciseRead] = []
+
+
+class ShoeCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=60)
+
+
+class ShoeUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=60)
+    retired: bool | None = None
+
+
+class ShoeRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    name: str
+    retired: bool
+
+
+class RunningStats(BaseModel):
+    km_month: float
+    km_year: float
 
 
 class ExerciseTemplateRead(BaseModel):

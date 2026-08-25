@@ -19,6 +19,7 @@ import type {
   HabitWithStatus,
   PeriodizationInfo,
   PlannedWorkout,
+  RunningStats,
 } from "../types";
 import {
   addDaysIso,
@@ -48,6 +49,11 @@ function stepFor(habit: HabitWithStatus): number {
   return 500;
 }
 
+// Sin decimales de sobra: 42 km en vez de 42.0, pero conserva 42.5 si aplica.
+function formatKm(km: number): string {
+  return Math.round(km * 10) / 10 === Math.round(km) ? String(Math.round(km)) : km.toFixed(1);
+}
+
 export default function Today() {
   const [date, setDate] = useState(todayIsoMadrid());
   const [habits, setHabits] = useState<HabitWithStatus[]>([]);
@@ -55,6 +61,7 @@ export default function Today() {
   const [score, setScore] = useState<DayScore | null>(null);
   const [week, setWeek] = useState<DayScore[]>([]);
   const [planned, setPlanned] = useState<PlannedWorkout | null>(null);
+  const [runningStats, setRunningStats] = useState<RunningStats | null>(null);
   const [loading, setLoading] = useState(true);
 
   const isToday = date === todayIsoMadrid();
@@ -81,6 +88,12 @@ export default function Today() {
     setLoading(true);
     load();
   }, [load]);
+
+  // Métrica motivadora: km del mes/año, independiente del día seleccionado.
+  // Se recarga en cada montaje de la página (p.ej. al volver de marcar un rodaje).
+  useEffect(() => {
+    workoutsApi.runningStats().then(setRunningStats);
+  }, []);
 
   // Un timer por hábito: los toques rápidos del stepper (+/-) se agrupan en
   // una sola escritura en vez de una petición por toque.
@@ -192,6 +205,20 @@ export default function Today() {
             </div>
           </div>
         </div>
+
+        {/* --- Métrica motivadora: km de rodaje acumulados --- */}
+        {runningStats && (runningStats.km_month > 0 || runningStats.km_year > 0) && (
+          <div className="card run-stats">
+            <div className="run-stat">
+              <strong>{formatKm(runningStats.km_month)}</strong>
+              <span>km este mes</span>
+            </div>
+            <div className="run-stat">
+              <strong>{formatKm(runningStats.km_year)}</strong>
+              <span>km este año</span>
+            </div>
+          </div>
+        )}
 
         {/* --- Tira de la última semana: un aro por día, coloreado por nivel --- */}
         <div className="week-strip">

@@ -1,21 +1,21 @@
-/* Estética CIMA: gear técnico de montaña. Base carbón cálida (roca/tierra
-   quemada, no gris frío de oficina) + un único acento en naranja señal —el
-   rojo-naranja de baliza/cordino que usa el material de trail de verdad—,
-   más tinta oscura sobre el acento en vez de blanca: ese naranja es tan
-   brillante que el texto negro contrasta mejor, como en la señalética real
-   de senda (fondo naranja, texto negro). Tipografía display condensada en
+/* Estética CIMA: gear técnico de montaña. Base antracita fría (piedra,
+   no tierra quemada) + un único acento en naranja señal —el rojo-naranja
+   de baliza/cordino que usa el material de trail de verdad—, más tinta
+   oscura sobre el acento en vez de blanca: ese naranja es tan brillante
+   que el texto negro contrasta mejor, como en la señalética real de
+   senda (fondo naranja, texto negro). Tipografía display condensada en
    mayúsculas para los rótulos —cartelería de refugio de montaña—, cuerpo en
    sans del sistema para que el contenido largo siga siendo legible. */
 
 :root {
   color-scheme: dark light;
 
-  --bg: #14110d;
-  --bg-elevated: #1c1812;
-  --bg-card: #241f1766;
-  --border: #322b20;
-  --text: #f2ece0;
-  --text-muted: #9c9184;
+  --bg: #121316;
+  --bg-elevated: #1c1d20;
+  --bg-card: #24262966;
+  --border: #33353a;
+  --text: #e8e9eb;
+  --text-muted: #8b9096;
   --accent: #ff4d26; /* naranja señal, tipo baliza de sendero */
   --accent-strong: #ff6b45;
   --accent-ink: #1a0a04; /* tinta oscura: sobre naranja brillante contrasta más que el blanco */
@@ -31,12 +31,12 @@
 
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #f0e9dc;
-    --bg-elevated: #faf6ee;
+    --bg: #e9eaec;
+    --bg-elevated: #f5f6f7;
     --bg-card: #ffffffb3;
-    --border: #ddd0b8;
-    --text: #241f17;
-    --text-muted: #7d7364;
+    --border: #d5d7da;
+    --text: #1c1d20;
+    --text-muted: #6b7075;
     --accent: #c7300f; /* más profundo sobre fondo claro: sigue leyéndose como texto/icono */
     --accent-strong: #a02509;
     --accent-ink: #ffffff;
@@ -429,6 +429,19 @@ nav.tabbar a.active .icon {
   flex: 1;
 }
 
+.done-banner .done-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.done-banner .done-text p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
 .done-icon {
   display: flex;
   align-items: center;
@@ -706,6 +719,40 @@ nav.tabbar a.active .icon {
   background: color-mix(in srgb, var(--accent) 14%, transparent);
   border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
   color: var(--accent);
+}
+
+/* ===== HOY: métrica motivadora (km de rodaje) ===== */
+.run-stats {
+  display: flex;
+  padding: 14px 18px;
+  margin-bottom: 12px;
+}
+
+.run-stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.run-stat + .run-stat {
+  border-left: 1px solid var(--border);
+}
+
+.run-stat strong {
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.01em;
+}
+
+.run-stat span {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 /* ===== HOY: lo que toca hoy (plan) ===== */

@@ -10,6 +10,7 @@ from app.models.planned import PlannedWorkout
 from app.models.user import User
 from app.models.workout import (
     ExerciseTemplate,
+    Shoe,
     WorkoutExercise,
     WorkoutSession,
     WorkoutSet,
@@ -26,6 +27,7 @@ __all__ = [
     "PlannedWorkout",
     "User",
     "ExerciseTemplate",
+    "Shoe",
     "WorkoutExercise",
     "WorkoutSession",
     "WorkoutSet",

@@ -2,7 +2,9 @@ import { api } from "./client";
 import type {
   ExerciseTemplate,
   PeriodizationInfo,
+  RunningStats,
   SessionComparison,
+  Shoe,
   WorkoutSession,
   WorkoutType,
 } from "../types";
@@ -14,6 +16,8 @@ export interface SessionPayload {
   notes?: string | null;
   running_minutes?: number | null;
   running_feeling?: number | null;
+  running_distance_km?: number | null;
+  shoe_id?: number | null;
   exercises: {
     name: string;
     order: number;
@@ -56,4 +60,10 @@ export const workoutsApi = {
   update: (id: number, data: SessionPayload) => api.put<WorkoutSession>(`/workouts/${id}`, data),
   remove: (id: number) => api.delete<void>(`/workouts/${id}`),
   comparison: (id: number) => api.get<SessionComparison>(`/workouts/${id}/comparison`),
+  runningStats: () => api.get<RunningStats>("/workouts/running-stats"),
+  shoes: () => api.get<Shoe[]>("/workouts/shoes"),
+  createShoe: (name: string) => api.post<Shoe>("/workouts/shoes", { name }),
+  updateShoe: (id: number, data: { name?: string; retired?: boolean }) =>
+    api.patch<Shoe>(`/workouts/shoes/${id}`, data),
+  deleteShoe: (id: number) => api.delete<void>(`/workouts/shoes/${id}`),
 };

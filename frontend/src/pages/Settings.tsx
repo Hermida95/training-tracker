@@ -4,6 +4,7 @@ import { breaksApi } from "../api/breaks";
 import { useAuth } from "../auth/AuthContext";
 import { HabitManager } from "../components/HabitManager";
 import { InviteManager } from "../components/InviteManager";
+import { ShoeManager } from "../components/ShoeManager";
 import { pushBreakConfigToServiceWorker } from "../hooks/useNotificationScheduler";
 import type { BreakConfig } from "../types";
 
@@ -98,6 +99,8 @@ export default function Settings() {
         )}
 
         <HabitManager />
+
+        <ShoeManager />
 
         <div className="card">
           <h2>Instalar la app</h2>

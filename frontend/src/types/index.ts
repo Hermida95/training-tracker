@@ -119,7 +119,20 @@ export interface WorkoutSession {
   notes: string | null;
   running_minutes: number | null;
   running_feeling: number | null;
+  running_distance_km: number | null;
+  shoe_id: number | null;
   exercises: WorkoutExercise[];
+}
+
+export interface Shoe {
+  id: number;
+  name: string;
+  retired: boolean;
+}
+
+export interface RunningStats {
+  km_month: number;
+  km_year: number;
 }
 
 export interface SetComparison {

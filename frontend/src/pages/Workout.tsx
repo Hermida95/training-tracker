@@ -7,6 +7,7 @@ import type {
   ExerciseTemplate,
   PeriodizationInfo,
   SessionComparison,
+  Shoe,
   WorkoutSession,
   WorkoutSet,
   WorkoutType,
@@ -55,6 +56,9 @@ export default function Workout() {
   const [saveState, setSaveState] = useState<SaveState>("idle");
   const [editingRoutine, setEditingRoutine] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [shoes, setShoes] = useState<Shoe[]>([]);
+  const [distanceKm, setDistanceKm] = useState<number | null>(null);
+  const [shoeId, setShoeId] = useState<number | null>(null);
 
   const hydrated = useRef(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -103,10 +107,14 @@ export default function Workout() {
       setSessionId(session.id);
       setCompleted(session.completed);
       setDraft(isGym(workoutType) ? draftFromSession(session) : []);
+      setDistanceKm(session.running_distance_km);
+      setShoeId(session.shoe_id);
       setSaveState("saved");
     } else {
       setSessionId(null);
       setCompleted(false);
+      setDistanceKm(null);
+      setShoeId(null);
       if (isGym(workoutType)) {
         const templates = await workoutsApi.templates(workoutType);
         setDraft(buildDraftFromTemplates(templates, p));
@@ -121,11 +129,17 @@ export default function Workout() {
     loadForType();
   }, [loadForType]);
 
+  useEffect(() => {
+    workoutsApi.shoes().then(setShoes);
+  }, []);
+
   const buildPayload = useCallback(
     (markCompleted?: boolean) => ({
       date: todayIso(),
       workout_type: workoutType,
       completed: markCompleted ?? completed,
+      running_distance_km: isGym(workoutType) ? null : distanceKm,
+      shoe_id: isGym(workoutType) ? null : shoeId,
       exercises: isGym(workoutType)
         ? draft.map((d, i) => ({
             name: d.name,
@@ -135,7 +149,7 @@ export default function Workout() {
           }))
         : [],
     }),
-    [workoutType, completed, draft]
+    [workoutType, completed, draft, distanceKm, shoeId]
   );
 
   // Autosave de gym: cada cambio del borrador se persiste (debounced). Crea la
@@ -211,7 +225,9 @@ export default function Workout() {
       await workoutsApi.update(sessionId, buildPayload(false));
       setCompleted(false);
     } else {
-      // Running: no había nada registrado, así que deshacer = borrar la sesión.
+      // Running: no hay borrador que conservar como en gym, así que deshacer
+      // borra la sesión entera (el km/zapatillas ya tecleados quedan en el
+      // formulario por si el usuario solo quiere corregir algo y repetir).
       await workoutsApi.remove(sessionId);
       setSessionId(null);
       setCompleted(false);
@@ -272,7 +288,23 @@ export default function Workout() {
             <span className="done-icon">
               <CheckIcon size={22} strokeWidth={2.4} />
             </span>
-            <strong>Entreno de hoy hecho</strong>
+            {isGym(workoutType) ? (
+              <strong>Entreno de hoy hecho</strong>
+            ) : (
+              <div className="done-text">
+                <strong>Entreno de hoy hecho</strong>
+                {(distanceKm !== null || shoeId !== null) && (
+                  <p>
+                    {[
+                      distanceKm !== null ? `${distanceKm} km` : null,
+                      shoeId !== null ? shoes.find((s) => s.id === shoeId)?.name : null,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                )}
+              </div>
+            )}
             <button className="ghost" onClick={undoDone}>
               Deshacer
             </button>
@@ -291,15 +323,41 @@ export default function Workout() {
         ) : loading ? (
           <p className="empty-state">Cargando…</p>
         ) : !isGym(workoutType) ? (
-          // --- RUNNING: solo marcar hecho ---
+          // --- RUNNING: distancia + zapatillas y marcar hecho ---
           !completed && (
             <div className="card">
               <h2>Rodaje de hoy</h2>
               <p>
-                Márcalo hecho cuando lo termines. El detalle (ritmo, distancia) lo llevas en tu
-                reloj; aquí solo cuenta que lo hiciste.
+                Márcalo hecho cuando lo termines. El ritmo lo llevas en tu reloj; aquí solo
+                registra la distancia y con qué zapatillas ha sido.
               </p>
-              <button className="primary big" onClick={() => markDone(false)}>
+              <div className="btn-row">
+                <div style={{ flex: 1 }}>
+                  <label>Distancia</label>
+                  <Stepper value={distanceKm} step={0.5} suffix="km" onChange={setDistanceKm} />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <label>Zapatillas</label>
+                  <select
+                    value={shoeId ?? ""}
+                    onChange={(e) => setShoeId(e.target.value ? Number(e.target.value) : null)}
+                  >
+                    <option value="">Sin especificar</option>
+                    {shoes
+                      .filter((s) => !s.retired || s.id === shoeId)
+                      .map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                  </select>
+                </div>
+              </div>
+              <button
+                className="primary big"
+                style={{ marginTop: 12 }}
+                onClick={() => markDone(false)}
+              >
                 Marcar rodaje hecho
               </button>
             </div>

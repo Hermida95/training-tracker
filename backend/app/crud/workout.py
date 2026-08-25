@@ -1,16 +1,17 @@
 import datetime
 
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.models.workout import (
     ExerciseTemplate,
+    Shoe,
     WorkoutExercise,
     WorkoutSession,
     WorkoutSet,
     WorkoutType,
 )
-from app.schemas.workout import WorkoutSessionCreate
+from app.schemas.workout import ShoeCreate, ShoeUpdate, WorkoutSessionCreate
 from app.utils.periodization import compute_cycle_week
 
 
@@ -136,6 +137,8 @@ def create_session(db: Session, user_id: int, data: WorkoutSessionCreate) -> Wor
         notes=data.notes,
         running_minutes=data.running_minutes,
         running_feeling=data.running_feeling,
+        running_distance_km=data.running_distance_km,
+        shoe_id=data.shoe_id,
         cycle_week=compute_cycle_week(db, user_id, data.date),
     )
     _fill_session(session, data)
@@ -178,6 +181,8 @@ def update_session(
     session.notes = data.notes
     session.running_minutes = data.running_minutes
     session.running_feeling = data.running_feeling
+    session.running_distance_km = data.running_distance_km
+    session.shoe_id = data.shoe_id
     _fill_session(session, data)
     db.commit()
     db.refresh(session)
@@ -186,4 +191,62 @@ def update_session(
 
 def delete_session(db: Session, session: WorkoutSession) -> None:
     db.delete(session)
+    db.commit()
+
+
+def running_km_totals(db: Session, user_id: int, today: datetime.date) -> tuple[float, float]:
+    """Suma de km de rodajes completados este mes y este año (métrica motivadora del HOY)."""
+    month_start = today.replace(day=1)
+    year_start = today.replace(month=1, day=1)
+    km_month = db.scalar(
+        select(func.coalesce(func.sum(WorkoutSession.running_distance_km), 0.0)).where(
+            WorkoutSession.user_id == user_id,
+            WorkoutSession.workout_type == WorkoutType.RUNNING,
+            WorkoutSession.completed.is_(True),
+            WorkoutSession.date >= month_start,
+            WorkoutSession.date <= today,
+        )
+    )
+    km_year = db.scalar(
+        select(func.coalesce(func.sum(WorkoutSession.running_distance_km), 0.0)).where(
+            WorkoutSession.user_id == user_id,
+            WorkoutSession.workout_type == WorkoutType.RUNNING,
+            WorkoutSession.completed.is_(True),
+            WorkoutSession.date >= year_start,
+            WorkoutSession.date <= today,
+        )
+    )
+    return round(km_month or 0.0, 2), round(km_year or 0.0, 2)
+
+
+def list_shoes(db: Session, user_id: int) -> list[Shoe]:
+    stmt = (
+        select(Shoe).where(Shoe.user_id == user_id).order_by(Shoe.retired, Shoe.created_at.desc())
+    )
+    return list(db.scalars(stmt))
+
+
+def get_shoe(db: Session, user_id: int, shoe_id: int) -> Shoe | None:
+    shoe = db.get(Shoe, shoe_id)
+    return shoe if shoe is not None and shoe.user_id == user_id else None
+
+
+def create_shoe(db: Session, user_id: int, data: ShoeCreate) -> Shoe:
+    shoe = Shoe(user_id=user_id, name=data.name)
+    db.add(shoe)
+    db.commit()
+    db.refresh(shoe)
+    return shoe
+
+
+def update_shoe(db: Session, shoe: Shoe, data: ShoeUpdate) -> Shoe:
+    for field, value in data.model_dump(exclude_unset=True).items():
+        setattr(shoe, field, value)
+    db.commit()
+    db.refresh(shoe)
+    return shoe
+
+
+def delete_shoe(db: Session, shoe: Shoe) -> None:
+    db.delete(shoe)
     db.commit()
