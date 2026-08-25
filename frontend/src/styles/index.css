@@ -352,9 +352,19 @@ input[type="number"] {
   color: var(--accent-ink);
 }
 
+/* position: fixed (no sticky): con poco contenido, #root no llega a cubrir
+   el viewport (main.flex:1 no surte efecto porque su padre no es un flex
+   container) y un sticky no tiene overflow del que "colgarse", así que se
+   quedaba pegado justo debajo del contenido corto en vez de abajo del todo.
+   fixed no depende de la altura del contenido: ancla siempre al viewport. */
 nav.tabbar {
-  position: sticky;
+  position: fixed;
+  left: 0;
+  right: 0;
   bottom: 0;
+  max-width: 560px;
+  margin: 0 auto;
+  z-index: 10;
   display: flex;
   border-top: 1px solid var(--border);
   background: color-mix(in srgb, var(--bg-elevated) 92%, transparent);
@@ -811,6 +821,88 @@ nav.tabbar a.active .icon {
 .plan-body p {
   margin: 3px 0 0;
   font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
+/* ===== HOY: plan de la semana completa (qué días tocan carrera y de qué
+   tipo, para que un Z2 no se confunda con series) ===== */
+.week-plan-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.week-plan-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.week-plan-day {
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  letter-spacing: 0.02em;
+  width: 18px;
+  flex-shrink: 0;
+  text-align: center;
+  color: var(--text-muted);
+}
+
+.week-plan-row.today .week-plan-day {
+  color: var(--accent);
+}
+
+.week-plan-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: var(--bg);
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.week-plan-icon.running {
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 14%, var(--bg));
+}
+
+.week-plan-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.week-plan-body strong {
+  font-size: 0.88rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.week-plan-body p {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.week-plan-move {
+  flex-shrink: 0;
+  width: auto;
+  min-height: 32px;
+  max-width: 92px;
+  padding: 4px 6px;
+  font-size: 0.68rem;
+  background: var(--bg);
   color: var(--text-muted);
 }
 
