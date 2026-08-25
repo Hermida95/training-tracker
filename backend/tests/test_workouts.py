@@ -53,6 +53,49 @@ def test_update_session_replaces_content(client):
     assert fetched["exercises"][0]["sets"][0]["reps"] == 10
 
 
+def test_running_session_marked_done(client):
+    res = client.post(
+        "/api/v1/workouts",
+        json={"date": "2026-07-14", "workout_type": "RUNNING", "completed": True, "exercises": []},
+    )
+    assert res.status_code == 201
+    assert res.json()["completed"] is True
+    assert res.json()["exercises"] == []
+
+
+def test_session_completed_toggles_via_update(client):
+    created = client.post("/api/v1/workouts", json=_session_payload("2026-07-13", 80)).json()
+    assert created["completed"] is False  # autosave: en curso
+
+    done = client.put(
+        f"/api/v1/workouts/{created['id']}",
+        json={
+            "date": "2026-07-13",
+            "workout_type": "GYM1",
+            "completed": True,
+            "exercises": created["exercises"]
+            and [
+                {
+                    "name": e["name"],
+                    "order": e["order"],
+                    "exercise_template_id": e["exercise_template_id"],
+                    "sets": [
+                        {
+                            "set_number": s["set_number"],
+                            "weight_kg": s["weight_kg"],
+                            "reps": s["reps"],
+                        }
+                        for s in e["sets"]
+                    ],
+                }
+                for e in created["exercises"]
+            ],
+        },
+    )
+    assert done.status_code == 200
+    assert done.json()["completed"] is True
+
+
 def test_update_session_not_found(client):
     assert (
         client.put("/api/v1/workouts/9999", json=_session_payload("2026-07-13", 80)).status_code

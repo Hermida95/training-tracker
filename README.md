@@ -19,7 +19,12 @@ PostgreSQL &nbsp;|&nbsp; React 18 · Vite · TypeScript · PWA + Service Worker
   añade/quita ejercicios, pesos, series), **autoguardado ejercicio a ejercicio**
   (si la app se cierra a media sesión no se pierde nada), registro de series en
   2 toques, comparación con la sesión anterior y periodización S1 RIR 3 → S4
-  descarga visible en la UI
+  descarga visible en la UI. Las sesiones de gym pueden **marcarse hechas de un
+  toque** (sin registrar, para los días que ya lo llevas en el reloj) y los
+  rodajes de running se marcan hechos directamente
+- 🎯 **Planes por usuario**: la rutina y hábitos de una cuenta se pueden ajustar
+  a un plan concreto con un script versionado sin tocar el seed por defecto
+  (ver `app/seed/hybrid_plan.py`, aplicable con `python -m app.seed.hybrid_plan <email>`)
 - ✅ **Hábitos**: pantalla HOY gamificada con aro de progreso, racha y tira de la
   semana; checklist según el día, hábitos personalizables (booleanos o con
   objetivo numérico), **edición de días pasados** y puntuación diaria por niveles

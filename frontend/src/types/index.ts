@@ -106,6 +106,7 @@ export interface WorkoutSession {
   date: string;
   workout_type: WorkoutType;
   cycle_week: number;
+  completed: boolean;
   notes: string | null;
   running_minutes: number | null;
   running_feeling: number | null;

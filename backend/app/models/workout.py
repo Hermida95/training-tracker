@@ -45,6 +45,9 @@ class WorkoutSession(Base):
     date: Mapped[datetime.date] = mapped_column(Date, index=True)
     workout_type: Mapped[WorkoutType] = mapped_column(Enum(WorkoutType, native_enum=False))
     cycle_week: Mapped[int] = mapped_column(default=1)  # 1-4, ver app.utils.periodization
+    # False = en curso (autosave a medias); True = el usuario la dio por terminada.
+    # Un rodaje marcado "hecho" nace ya con completed=True (no se registra nada más).
+    completed: Mapped[bool] = mapped_column(default=False)
     notes: Mapped[str | None] = mapped_column(default=None)
     running_minutes: Mapped[int | None] = mapped_column(default=None)
     running_feeling: Mapped[int | None] = mapped_column(default=None)  # 1-5

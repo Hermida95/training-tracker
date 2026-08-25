@@ -132,6 +132,7 @@ def create_session(db: Session, user_id: int, data: WorkoutSessionCreate) -> Wor
         user_id=user_id,
         date=data.date,
         workout_type=data.workout_type,
+        completed=data.completed,
         notes=data.notes,
         running_minutes=data.running_minutes,
         running_feeling=data.running_feeling,
@@ -173,6 +174,7 @@ def update_session(
     La fecha y el tipo no cambian una vez creada la sesión; solo se
     actualizan ejercicios, series y los campos de running.
     """
+    session.completed = data.completed
     session.notes = data.notes
     session.running_minutes = data.running_minutes
     session.running_feeling = data.running_feeling

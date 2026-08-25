@@ -10,6 +10,7 @@ import type {
 export interface SessionPayload {
   date: string;
   workout_type: WorkoutType;
+  completed?: boolean;
   notes?: string | null;
   running_minutes?: number | null;
   running_feeling?: number | null;
@@ -53,5 +54,6 @@ export const workoutsApi = {
   get: (id: number) => api.get<WorkoutSession>(`/workouts/${id}`),
   create: (data: SessionPayload) => api.post<WorkoutSession>("/workouts", data),
   update: (id: number, data: SessionPayload) => api.put<WorkoutSession>(`/workouts/${id}`, data),
+  remove: (id: number) => api.delete<void>(`/workouts/${id}`),
   comparison: (id: number) => api.get<SessionComparison>(`/workouts/${id}/comparison`),
 };

@@ -389,6 +389,47 @@ nav.tabbar .icon {
   margin-bottom: 8px;
 }
 
+/* ===== Entreno: estado hecho y atajo ===== */
+.done-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: var(--radius);
+  background: color-mix(in srgb, var(--accent) 12%, var(--bg-elevated));
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  margin-bottom: 14px;
+}
+
+.done-banner strong {
+  flex: 1;
+}
+
+.done-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--accent);
+  color: var(--accent-ink);
+  flex-shrink: 0;
+}
+
+.done-banner .ghost {
+  min-height: 40px;
+  padding: 6px 14px;
+  color: var(--text-muted);
+}
+
+.mark-quick {
+  width: 100%;
+  margin-bottom: 12px;
+  color: var(--text-muted);
+  border-style: dashed;
+}
+
 /* ===== Editor de rutina ===== */
 .routine-row {
   padding: 12px 0;

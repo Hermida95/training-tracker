@@ -38,6 +38,7 @@ class WorkoutExerciseRead(BaseModel):
 class WorkoutSessionCreate(BaseModel):
     date: datetime.date
     workout_type: WorkoutType
+    completed: bool = False
     notes: str | None = None
     running_minutes: int | None = None
     running_feeling: int | None = None
@@ -51,6 +52,7 @@ class WorkoutSessionRead(BaseModel):
     date: datetime.date
     workout_type: WorkoutType
     cycle_week: int
+    completed: bool
     notes: str | None = None
     running_minutes: int | None = None
     running_feeling: int | None = None
