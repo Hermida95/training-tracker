@@ -663,6 +663,65 @@ nav.tabbar .icon {
   color: var(--accent);
 }
 
+/* ===== HOY: lo que toca hoy (plan) ===== */
+.plan-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 18px;
+  border-radius: var(--radius);
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  margin-bottom: 14px;
+}
+
+.plan-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.plan-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.plan-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--text-muted);
+}
+
+.plan-ai {
+  font-size: 0.62rem;
+  letter-spacing: 0.06em;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent);
+}
+
+.plan-body strong {
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.plan-body p {
+  margin: 3px 0 0;
+  font-size: 0.86rem;
+  color: var(--text-muted);
+}
+
 /* ===== HOY: tira de la semana ===== */
 .week-strip {
   display: grid;

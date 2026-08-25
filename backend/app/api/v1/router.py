@@ -8,6 +8,7 @@ from app.api.v1.endpoints import (
     habits,
     invites,
     menu,
+    planned,
     stats,
     workouts,
 )
@@ -18,6 +19,7 @@ api_router.include_router(invites.router)
 api_router.include_router(menu.router)
 api_router.include_router(habits.router)
 api_router.include_router(workouts.router)
+api_router.include_router(planned.router)
 api_router.include_router(body_metrics.router)
 api_router.include_router(breaks.router)
 api_router.include_router(stats.router)

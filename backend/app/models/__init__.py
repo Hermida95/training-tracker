@@ -6,6 +6,7 @@ from app.models.break_event import BreakEvent
 from app.models.habit import Habit, HabitLog
 from app.models.invite import InviteCode
 from app.models.menu import MenuDocument
+from app.models.planned import PlannedWorkout
 from app.models.user import User
 from app.models.workout import (
     ExerciseTemplate,
@@ -22,6 +23,7 @@ __all__ = [
     "HabitLog",
     "InviteCode",
     "MenuDocument",
+    "PlannedWorkout",
     "User",
     "ExerciseTemplate",
     "WorkoutExercise",

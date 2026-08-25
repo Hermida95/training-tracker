@@ -1,0 +1,71 @@
+# Genera el plan de la semana que viene los domingos a las 20:00 (Europe/Madrid):
+# extrae métricas de Garmin, se las pasa a Claude (vía Claude Code headless,
+# dentro del plan Pro) y escribe el plan en la BD (tabla planned_workouts).
+#
+# Truco de horario de verano: el cron de GitHub Actions va en UTC y no ajusta
+# el DST, así que disparamos a las DOS horas UTC que corresponden a las 20:00
+# de Madrid (18:00 UTC en verano, 19:00 UTC en invierno). El propio script
+# comprueba la hora local real y solo la ejecución correcta sigue adelante;
+# la otra sale sin hacer nada. Así siempre corre una vez, a las 20:00 locales.
+#
+# Si algún domingo falla, GitHub te envía un email automáticamente. Para
+# relanzarlo a mano (destascar): pestaña Actions -> "Weekly plan" -> Run workflow.
+#
+# Secretos necesarios (Settings -> Secrets and variables -> Actions):
+#   DATABASE_URL             connection string de Neon (postgresql+psycopg://...)
+#   PLAN_USER_EMAIL          tu email de la app (a qué cuenta escribir el plan)
+#   CLAUDE_CODE_OAUTH_TOKEN  token de tu suscripción (crear con: claude setup-token)
+#   GARMIN_TOKENS_B64        base64 del directorio de tokens de Garmin (ver AUTOMATION.md)
+
+name: Weekly plan
+
+on:
+  schedule:
+    - cron: "0 18 * * 0" # 18:00 UTC dom = 20:00 Madrid en horario de verano (CEST)
+    - cron: "0 19 * * 0" # 19:00 UTC dom = 20:00 Madrid en horario de invierno (CET)
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Ignorar el guard horario y ejecutar ya"
+        type: boolean
+        default: true
+
+concurrency:
+  group: weekly-plan
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: "pip"
+          cache-dependency-path: backend/requirements*.txt
+
+      - name: Install dependencies
+        working-directory: backend
+        run: pip install -r requirements.txt -r requirements-automation.txt
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Restore Garmin tokens
+        run: |
+          mkdir -p "$HOME/.garminconnect"
+          echo "${{ secrets.GARMIN_TOKENS_B64 }}" | base64 -d | tar -xz -C "$HOME/.garminconnect"
+
+      - name: Generate and write weekly plan
+        working-directory: backend
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          GARMINTOKENS: /home/runner/.garminconnect
+          PLAN_USER_EMAIL: ${{ secrets.PLAN_USER_EMAIL }}
+          # En dispatch manual respetamos el input force (default true); en cron, no.
+          FORCE_FLAG: ${{ github.event_name == 'workflow_dispatch' && inputs.force && '--force' || '' }}
+        run: |
+          python -m app.automation.weekly_plan "$PLAN_USER_EMAIL" $FORCE_FLAG

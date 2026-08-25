@@ -75,6 +75,15 @@ export interface HabitLog {
 
 export type WorkoutType = "GYM1" | "GYM2" | "GYM3" | "RUNNING" | "CUSTOM";
 
+export interface PlannedWorkout {
+  id: number;
+  date: string;
+  workout_type: WorkoutType | null;
+  title: string;
+  details: string | null;
+  source: "ai" | "manual";
+}
+
 export interface ExerciseTemplate {
   id: number;
   workout_type: WorkoutType;

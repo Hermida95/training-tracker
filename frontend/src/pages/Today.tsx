@@ -1,15 +1,25 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { habitsApi } from "../api/habits";
+import { plannedApi } from "../api/planned";
 import { workoutsApi } from "../api/workouts";
 import {
+  BarbellIcon,
   CheckIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
   FlameIcon,
+  LeafIcon,
+  SunIcon,
 } from "../components/icons";
 import { ProgressRing } from "../components/ProgressRing";
 import { Stepper } from "../components/Stepper";
-import type { DayScore, DayScoreTier, HabitWithStatus, PeriodizationInfo } from "../types";
+import type {
+  DayScore,
+  DayScoreTier,
+  HabitWithStatus,
+  PeriodizationInfo,
+  PlannedWorkout,
+} from "../types";
 import {
   addDaysIso,
   friendlyDateLabel,
@@ -44,6 +54,7 @@ export default function Today() {
   const [periodization, setPeriodization] = useState<PeriodizationInfo | null>(null);
   const [score, setScore] = useState<DayScore | null>(null);
   const [week, setWeek] = useState<DayScore[]>([]);
+  const [planned, setPlanned] = useState<PlannedWorkout | null>(null);
   const [loading, setLoading] = useState(true);
 
   const isToday = date === todayIsoMadrid();
@@ -54,12 +65,14 @@ export default function Today() {
       workoutsApi.periodization(date),
       habitsApi.score(date),
       habitsApi.scoreHistory(date, 7),
+      plannedApi.today(date).catch(() => null),
     ])
-      .then(([h, p, s, w]) => {
+      .then(([h, p, s, w, pl]) => {
         setHabits(h);
         setPeriodization(p);
         setScore(s);
         setWeek(w);
+        setPlanned(pl);
       })
       .finally(() => setLoading(false));
   }, [date]);
@@ -205,6 +218,29 @@ export default function Today() {
             );
           })}
         </div>
+
+        {/* --- Lo que toca hoy (plan generado por el coach o manual) --- */}
+        {planned && (
+          <div className="plan-card">
+            <span className="plan-icon">
+              {planned.workout_type === "RUNNING" ? (
+                <SunIcon size={22} />
+              ) : planned.workout_type ? (
+                <BarbellIcon size={22} />
+              ) : (
+                <LeafIcon size={22} />
+              )}
+            </span>
+            <div className="plan-body">
+              <span className="plan-kicker">
+                {isToday ? "Hoy toca" : "Ese día toca"}
+                {planned.source === "ai" && <span className="plan-ai">coach IA</span>}
+              </span>
+              <strong>{planned.title}</strong>
+              {planned.details && <p>{planned.details}</p>}
+            </div>
+          </div>
+        )}
 
         {periodization && (
           <div className="banner">

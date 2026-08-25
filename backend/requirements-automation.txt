@@ -1,0 +1,3 @@
+# Dependencias SOLO del automatismo semanal (no van en la imagen de Cloud Run).
+# Se instalan en el runner de GitHub Actions junto a requirements.txt.
+garminconnect==0.2.25

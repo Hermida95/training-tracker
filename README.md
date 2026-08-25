@@ -28,6 +28,10 @@ PostgreSQL &nbsp;|&nbsp; React 18 · Vite · TypeScript · PWA + Service Worker
 - ✅ **Hábitos**: pantalla HOY gamificada con aro de progreso, racha y tira de la
   semana; checklist según el día, hábitos personalizables (booleanos o con
   objetivo numérico), **edición de días pasados** y puntuación diaria por niveles
+- 🤖 **Plan semanal automático** (opcional): un cron gratuito los domingos lee
+  tus métricas de recuperación de Garmin, se las pasa a Claude como entrenador
+  y escribe el plan de la semana siguiente por día, que ves en HOY como "Hoy
+  toca …". Detalle y puesta en marcha en [AUTOMATION.md](AUTOMATION.md)
 - 📈 **Progreso**: peso y cintura con media móvil semanal (recharts), resumen
   mensual y export JSON/texto para pegar a un coach IA
 - ⏰ **Alarma antisedentarismo**: notificaciones locales programadas cada 45-50
