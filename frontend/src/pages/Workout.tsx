@@ -1,11 +1,13 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { plannedApi } from "../api/planned";
 import { workoutsApi } from "../api/workouts";
-import { CheckIcon } from "../components/icons";
+import { BarbellIcon, CheckIcon, LeafIcon, SunIcon } from "../components/icons";
 import { RoutineEditor } from "../components/RoutineEditor";
 import { Stepper } from "../components/Stepper";
 import type {
   ExerciseTemplate,
   PeriodizationInfo,
+  PlannedWorkout,
   SessionComparison,
   Shoe,
   WorkoutSession,
@@ -59,6 +61,7 @@ export default function Workout() {
   const [shoes, setShoes] = useState<Shoe[]>([]);
   const [distanceKm, setDistanceKm] = useState<number | null>(null);
   const [shoeId, setShoeId] = useState<number | null>(null);
+  const [planned, setPlanned] = useState<PlannedWorkout | null>(null);
 
   const hydrated = useRef(false);
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -131,6 +134,9 @@ export default function Workout() {
 
   useEffect(() => {
     workoutsApi.shoes().then(setShoes);
+    // Lo que prescribió el coach para hoy no depende del tipo elegido en el
+    // desplegable, así que se pide una sola vez (no en loadForType).
+    plannedApi.today(todayIso()).catch(() => null).then(setPlanned);
   }, []);
 
   const buildPayload = useCallback(
@@ -281,6 +287,30 @@ export default function Workout() {
             </button>
           )}
         </div>
+
+        {/* Lo que prescribió el coach para hoy — mismo texto/tarjeta que en
+            HOY, para que un rodaje Z2 no se confunda con uno de series. */}
+        {planned && (
+          <div className="plan-card">
+            <span className="plan-icon">
+              {planned.workout_type === "RUNNING" ? (
+                <SunIcon size={22} />
+              ) : planned.workout_type ? (
+                <BarbellIcon size={22} />
+              ) : (
+                <LeafIcon size={22} />
+              )}
+            </span>
+            <div className="plan-body">
+              <span className="plan-kicker">
+                Hoy toca
+                {planned.source === "ai" && <span className="plan-ai">coach IA</span>}
+              </span>
+              <strong>{planned.title}</strong>
+              {planned.details && <p>{planned.details}</p>}
+            </div>
+          </div>
+        )}
 
         {/* Estado hecho: banner con deshacer, para gym y running */}
         {completed && !editingRoutine && (

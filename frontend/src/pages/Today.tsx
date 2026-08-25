@@ -13,6 +13,7 @@ import {
 } from "../components/icons";
 import { ProgressRing } from "../components/ProgressRing";
 import { Stepper } from "../components/Stepper";
+import { WeekPlan } from "../components/WeekPlan";
 import type {
   DayScore,
   DayScoreTier,
@@ -269,6 +270,9 @@ export default function Today() {
             </div>
           </div>
         )}
+
+        {/* --- Semana completa: qué días tocan carrera (y de qué tipo) o gym --- */}
+        <WeekPlan />
 
         {periodization && (
           <div className="banner">
