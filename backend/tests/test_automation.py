@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 import pytest
 
 from app.automation import coach, macro, weekly_plan
-from app.automation.garmin_metrics import stub
+from app.automation.garmin_metrics import WeeklyMetrics, _parse_activity, stub
 
 MADRID = ZoneInfo("Europe/Madrid")
 
@@ -119,3 +119,55 @@ def test_generate_plan_rejects_invalid_type():
     bad["days"][0]["workout_type"] = "PILATES"
     with pytest.raises(RuntimeError):
         coach.generate_plan(stub(), datetime.date(2026, 8, 31), runner=lambda _: json.dumps(bad))
+
+
+# --- Actividades reales de Garmin (planificado vs. real) ---
+
+
+def test_parse_activity_extracts_known_fields():
+    raw = {
+        "activityType": {"typeKey": "running"},
+        "activityName": "Rodaje mañanero",
+        "startTimeLocal": "2026-08-18 07:15:00",
+        "duration": 2520,  # 42 min
+        "distance": 8100,  # 8.1 km
+        "averageHR": 148,
+        "elevationGain": 65,
+    }
+    activity = _parse_activity(raw)
+    assert activity.date == "2026-08-18"
+    assert activity.activity_type == "running"
+    assert activity.duration_min == 42
+    assert activity.distance_km == 8.1
+    assert activity.avg_hr == 148
+    assert activity.pace_min_km == 5.19  # round(42 / 8.1, 2)
+    assert activity.elevation_gain_m == 65
+
+
+def test_parse_activity_skips_pace_without_real_distance():
+    # Sesión de gym: tiene duración pero no desplazamiento -> sin ritmo.
+    raw = {
+        "activityType": {"typeKey": "strength_training"},
+        "startTimeLocal": "2026-08-19 18:00:00",
+        "duration": 3300,
+        "distance": 0,
+    }
+    activity = _parse_activity(raw)
+    assert activity.distance_km == 0
+    assert activity.pace_min_km is None
+
+
+def test_parse_activity_returns_none_without_activity_type():
+    assert _parse_activity({"startTimeLocal": "2026-08-18 07:15:00"}) is None
+
+
+def test_prompt_summary_includes_real_activities():
+    summary = stub().to_prompt_summary()
+    assert "Actividades reales registradas" in summary
+    assert "running" in summary
+    assert "5:00/km" in summary  # 40 min / 8.0 km
+
+
+def test_prompt_summary_placeholder_when_no_activities():
+    summary = WeeklyMetrics().to_prompt_summary()
+    assert "(sin actividades registradas esta semana)" in summary

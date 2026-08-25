@@ -46,6 +46,12 @@ progresa con prudencia sin saltarte el techo de +10%. Los ejercicios concretos
 de gym ya están en la app; tú decides el ENFOQUE, los tiempos/topes de carrera
 y el RIR, no listas de ejercicios. En `details` de cada día, sé concreto y
 accionable (tope de FC, duración, RIR, recordatorios).
+
+Además de la recuperación tienes las ACTIVIDADES REALES de la última semana
+(lo que de verdad se hizo, no lo planificado). Úsalas para detectar desvíos:
+si se saltó una sesión clave, si corrió muy por encima del ritmo/FC objetivo
+en un rodaje que debía ser Z2, o si el volumen real quedó muy por debajo de lo
+previsto. Comenta el desvío más relevante (si lo hay) en `coach_note`.
 """
 
 OUTPUT_INSTRUCTIONS = """\

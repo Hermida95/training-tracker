@@ -3,8 +3,10 @@
 Cada **domingo a las 20:00 (hora de Galicia)** un cron gratuito en GitHub
 Actions:
 
-1. Lee tus métricas de recuperación de los últimos 7 días de **Garmin** (HRV,
-   sueño, readiness, carga de entrenamiento, FC en reposo).
+1. Lee de **Garmin** los últimos 7 días: recuperación (HRV, sueño, readiness,
+   carga de entrenamiento, FC en reposo) y las actividades reales que
+   registraste, para poder comparar lo planificado contra lo que de verdad
+   hiciste.
 2. Se las pasa a **Claude** —usando tu suscripción **Pro** vía Claude Code
    headless, sin factura de API— que actúa de entrenador y genera el plan de
    los próximos 7 días.
