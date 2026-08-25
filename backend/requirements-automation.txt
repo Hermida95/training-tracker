@@ -1,3 +1,5 @@
 # Dependencias SOLO del automatismo semanal (no van en la imagen de Cloud Run).
 # Se instalan en el runner de GitHub Actions junto a requirements.txt.
-garminconnect==0.2.25
+# 0.3.2 = misma versión que el MCP de Garmin (Taxuspt/garmin_mcp), para que
+# lea el token store existente (~/.garminconnect/garmin_tokens.json) sin reloguear.
+garminconnect==0.3.2

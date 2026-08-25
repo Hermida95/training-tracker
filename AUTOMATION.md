@@ -55,27 +55,25 @@ semanal es insignificante.)
 
 ### 4. `GARMIN_TOKENS_B64` — tus tokens de Garmin (sin contraseña en el cron)
 
-Dijiste que ya te logueaste y tienes tokens válidos ~6 meses. Solo hay que
-empaquetar ese directorio de tokens y meterlo como secreto. En tu Mac:
+Son los **mismos tokens que ya usa tu MCP de Garmin** (`~/.garminconnect/
+garmin_tokens.json`). Confirmado: con `garminconnect==0.3.2` funcionan tal
+cual, **no hace falta volver a loguearse**. Solo hay que empaquetarlos y
+meterlos como secreto. En tu Mac:
 
 ```bash
-# Ruta por defecto de garth/garminconnect (ajústala si usaste otra):
-TOKENDIR="$HOME/.garminconnect"
+# Comprueba que está el fichero de tokens:
+ls "$HOME/.garminconnect"        # deberías ver garmin_tokens.json
 
-# Comprueba que están ahí (deberías ver oauth1_token.json / oauth2_token.json):
-ls "$TOKENDIR"
-
-# Empaqueta y codifica en base64 (macOS):
-tar -czf - -C "$TOKENDIR" . | base64 | pbcopy
+# Empaqueta y codifica en base64, y déjalo en el portapapeles (macOS):
+tar -czf - -C "$HOME/.garminconnect" . | base64 | pbcopy
 ```
 
 `pbcopy` deja el base64 en el portapapeles: pégalo en el secreto
 `GARMIN_TOKENS_B64`. El workflow lo descodifica en cada ejecución a
 `~/.garminconnect`.
 
-> Si tus tokens **no** están en `~/.garminconnect`, dime dónde los guardaste
-> (qué librería usaste) y ajusto la ruta. Cuando caduquen (~6 meses), repite
-> este paso con tokens nuevos.
+> Cuando los tokens caduquen (~6 meses) o dejen de funcionar, vuelve a
+> generarlos con tu MCP/login de Garmin y repite este paso.
 
 ---
 
