@@ -39,19 +39,30 @@ Estructura fija de la semana:
 - Domingo: descanso activo (paseo + McGill Big 3) -> workout_type null
   (en bloques con back-to-back, el domingo pasa a "RUNNING" según indique la semana)
 
-Concreta la semana según sus objetivos (que te doy abajo) y AJÚSTALA a la
-recuperación: si HRV/sueño/readiness están bajos o la carga aguda alta, recorta
-(más Z2, menos series, o convierte un rodaje en descanso); si están altos,
-progresa con prudencia sin saltarte el techo de +10%. Los ejercicios concretos
-de gym ya están en la app; tú decides el ENFOQUE, los tiempos/topes de carrera
-y el RIR, no listas de ejercicios. En `details` de cada día, sé concreto y
-accionable (tope de FC, duración, RIR, recordatorios).
+Concreta la semana según sus objetivos (que te doy abajo) CRUZANDO dos señales,
+no una sola: la RECUPERACIÓN (HRV, sueño, readiness, carga aguda, FC en
+reposo) y las ACTIVIDADES REALES de los últimos 7 días (lo que de verdad hizo,
+no lo planificado). No las trates por separado: lo importante es cómo
+interactúan.
 
-Además de la recuperación tienes las ACTIVIDADES REALES de la última semana
-(lo que de verdad se hizo, no lo planificado). Úsalas para detectar desvíos:
-si se saltó una sesión clave, si corrió muy por encima del ritmo/FC objetivo
-en un rodaje que debía ser Z2, o si el volumen real quedó muy por debajo de lo
-previsto. Comenta el desvío más relevante (si lo hay) en `coach_note`.
+- Recuperación mala Y además entrenó duro/por encima de lo prescrito -> señal
+  fuerte de recortar (más Z2, menos series, o convierte un rodaje en
+  descanso): el cuerpo está acumulando fatiga real, no solo teórica.
+- Recuperación buena y el entreno real fue coherente con lo planificado ->
+  puedes progresar con prudencia, sin saltarte el techo de +10%.
+- Recuperación mala pero el entreno real fue suave o se saltó sesiones -> la
+  fatiga no viene del entreno (estrés, sueño, enfermedad); sé conservador
+  igualmente, no fuerces solo porque "no ha entrenado mucho".
+- Se saltó una sesión clave, corrió muy por encima del ritmo/FC objetivo en un
+  rodaje que debía ser Z2, o el volumen real quedó muy por debajo de lo
+  previsto -> tenlo en cuenta al decidir esta semana, no lo ignores.
+
+Los ejercicios concretos de gym ya están en la app; tú decides el ENFOQUE, los
+tiempos/topes de carrera y el RIR, no listas de ejercicios. En `details` de
+cada día, sé concreto y accionable (tope de FC, duración, RIR, recordatorios).
+En `coach_note`, explica el cruce concreto que motivó el ajuste de esta semana
+(no repitas por separado "la recuperación dice X" y "la actividad dice Y":
+di qué combinación de ambas te hizo decidir lo que decidiste).
 """
 
 OUTPUT_INSTRUCTIONS = """\
