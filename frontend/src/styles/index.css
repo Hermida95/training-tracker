@@ -1,45 +1,45 @@
-/* Estética CIMA: gear técnico de montaña. Base antracita fría (piedra,
-   no tierra quemada) + un único acento en naranja señal —el rojo-naranja
-   de baliza/cordino que usa el material de trail de verdad—, más tinta
-   oscura sobre el acento en vez de blanca: ese naranja es tan brillante
-   que el texto negro contrasta mejor, como en la señalética real de
-   senda (fondo naranja, texto negro). Tipografía display condensada en
-   mayúsculas para los rótulos —cartelería de refugio de montaña—, cuerpo en
-   sans del sistema para que el contenido largo siga siendo legible. */
+/* Estética CIMA: laboratorio de montaña. Papel piedra (o antracita cálida en
+   oscuro) + tinta casi negra + un único acento de arcilla apagada —nada de
+   negro puro ni de naranja señal: la referencia es la ficha técnica de una
+   marca de material de trail real, no una app genérica. Familjen Grotesk
+   para todo el contenido (números grandes con peso, texto normal sin él);
+   IBM Plex Mono solo para las etiquetas técnicas pequeñas —el tipo de
+   rodaje, el día de la semana, los rótulos de sección— como si fueran specs
+   cosidas en la prenda. */
 
 :root {
   color-scheme: dark light;
 
-  --bg: #121316;
-  --bg-elevated: #1c1d20;
-  --bg-card: #24262966;
-  --border: #33353a;
-  --text: #e8e9eb;
-  --text-muted: #8b9096;
-  --accent: #ff4d26; /* naranja señal, tipo baliza de sendero */
-  --accent-strong: #ff6b45;
-  --accent-ink: #1a0a04; /* tinta oscura: sobre naranja brillante contrasta más que el blanco */
-  --danger: #c2495c; /* vino/grosella: se distingue del naranja de marca */
+  --bg: #1c1815;
+  --bg-elevated: #241f1a;
+  --bg-card: #2b261fb3;
+  --border: #3a3228;
+  --text: #ece6d8;
+  --text-muted: #9c9184;
+  --accent: #e0885f; /* arcilla clara: sobre fondo oscuro necesita más luz que la de día */
+  --accent-strong: #ef9d76;
+  --accent-ink: #201d18; /* tinta oscura: el acento es claro, no brillante-saturado */
+  --danger: #c2495c;
   --warning: #e8b04b;
   --radius: 8px;
 
-  --font-display: "Bebas Neue", "Oswald", Impact, Haettenschweiler, sans-serif;
-  font-family:
-    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  --font-display: "Familjen Grotesk", -apple-system, "Segoe UI", sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  font-family: "Familjen Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   letter-spacing: 0.01em;
 }
 
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #e9eaec;
-    --bg-elevated: #f5f6f7;
-    --bg-card: #ffffffb3;
-    --border: #d5d7da;
-    --text: #1c1d20;
-    --text-muted: #6b7075;
-    --accent: #c7300f; /* más profundo sobre fondo claro: sigue leyéndose como texto/icono */
-    --accent-strong: #a02509;
-    --accent-ink: #ffffff;
+    --bg: #ece6d8;
+    --bg-elevated: #f5f1e6;
+    --bg-card: #fbf8f1b3;
+    --border: #cfc9ba;
+    --text: #201d18;
+    --text-muted: #6e6a5f;
+    --accent: #b0502c; /* arcilla apagada: se lee sin gritar sobre el papel piedra */
+    --accent-strong: #96401f;
+    --accent-ink: #f7f3ea;
     --danger: #93324a;
   }
 }
@@ -81,21 +81,19 @@ h1, h2, h3 {
 
 h1 {
   font-family: var(--font-display);
-  font-size: 1.7rem;
-  font-weight: 400;
-  letter-spacing: 0.03em;
-  text-transform: uppercase;
+  font-size: 1.6rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
 }
 
-/* Rótulos de sección como una señal de sendero: mayúsculas, condensadas,
-   con el tracking justo (Bebas Neue ya viene apretada de por sí). */
+/* Rótulos de sección en mono, como la etiqueta de una ficha técnica. */
 h2 {
-  font-family: var(--font-display);
-  font-size: 0.85rem;
-  font-weight: 400;
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  font-weight: 500;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   margin-bottom: 12px;
 }
 
@@ -167,9 +165,9 @@ button.big {
   width: 100%;
   min-height: 60px;
   font-family: var(--font-display);
-  font-size: 1.15rem;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 1.1rem;
+  letter-spacing: -0.005em;
 }
 
 button:disabled {
@@ -378,8 +376,9 @@ nav.tabbar a {
   padding: 12px 4px 10px;
   text-decoration: none;
   color: var(--text-muted);
-  font-family: var(--font-display);
-  font-size: 0.78rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  font-weight: 500;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   display: flex;
@@ -598,183 +597,134 @@ nav.tabbar a.active .icon {
   border: none;
   color: var(--text);
   font-family: var(--font-display);
-  font-size: 1.4rem;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
+  font-weight: 600;
+  font-size: 1.3rem;
+  letter-spacing: -0.01em;
 }
 
 /* ===== HOY: héroe con aro de progreso ===== */
+/* Héroe: nada de tarjeta redondeada con aro — el dato principal va
+   enmarcado en corchetes de encuadre (como una ficha técnica), y debajo
+   una franja de specs con divisores en vez de insignias sueltas. */
 .hero-card {
-  display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 20px 18px;
+  padding: 18px 18px 16px;
   border-radius: var(--radius);
   background: var(--bg-elevated);
   border: 1px solid var(--border);
   margin-bottom: 12px;
-}
-
-.progress-ring {
   position: relative;
-  flex-shrink: 0;
+  overflow: hidden;
 }
 
-.progress-ring-center {
-  position: absolute;
-  inset: 0;
+.hero-tag-row {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 2px;
+  justify-content: space-between;
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 18px;
 }
+
+.hero-id {
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.hero-id span {
+  color: var(--text-muted);
+}
+
+.hero-date {
+  color: var(--text-muted);
+}
+
+.hero-bracket {
+  position: relative;
+  padding: 18px 4px 20px;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.hero-bracket-mark {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 1.5px solid var(--accent);
+}
+
+.hero-bracket-mark.tl { top: 0; left: 0; border-right: none; border-bottom: none; }
+.hero-bracket-mark.tr { top: 0; right: 0; border-left: none; border-bottom: none; }
+.hero-bracket-mark.bl { bottom: 0; left: 0; border-right: none; border-top: none; }
+.hero-bracket-mark.br { bottom: 0; right: 0; border-left: none; border-top: none; }
 
 .hero-pct {
   font-family: var(--font-display);
-  font-size: 2.1rem;
+  font-weight: 700;
+  font-size: 3.6rem;
+  line-height: 0.82;
+  letter-spacing: -0.02em;
   font-variant-numeric: tabular-nums;
-  line-height: 1;
+}
+
+.hero-pct-sym {
+  font-size: 0.36em;
+  font-weight: 500;
+  margin-left: 1px;
 }
 
 .hero-sub {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-}
-
-.hero-side {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-width: 0;
-}
-
-.hero-streak {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--accent);
-}
-
-/* La llama "respira" muy sutilmente cuando hay racha viva: da la sensación
-   de fuego real sin resultar molesto en un dato que se mira todo el rato. */
-.hero-streak.alive svg {
-  animation: flame-flicker 1.8s ease-in-out infinite;
-  transform-origin: 50% 90%;
-}
-
-@keyframes flame-flicker {
-  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
-  25% { transform: scale(1.06) rotate(-2deg); opacity: 0.92; }
-  50% { transform: scale(0.97) rotate(1deg); opacity: 1; }
-  75% { transform: scale(1.03) rotate(-1deg); opacity: 0.95; }
-}
-
-.hero-streak > div {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.1;
-}
-
-.hero-streak strong {
-  font-family: var(--font-display);
-  font-size: 1.8rem;
-  color: var(--text);
-  font-variant-numeric: tabular-nums;
-}
-
-.hero-streak span {
-  font-size: 0.74rem;
-  color: var(--text-muted);
-}
-
-.hero-badges {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.tier-badge,
-.points-badge {
-  font-size: 0.72rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  padding: 4px 10px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  color: var(--text-muted);
-  white-space: nowrap;
-}
-
-.tier-badge.tier-perfect {
-  color: var(--warning);
-  border-color: color-mix(in srgb, var(--warning) 50%, var(--border));
-  animation: badge-glow 2.4s ease-in-out infinite;
-}
-
-@keyframes badge-glow {
-  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--warning) 45%, transparent); }
-  70% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--warning) 0%, transparent); }
-  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--warning) 0%, transparent); }
-}
-
-.tier-badge.tier-great {
-  color: var(--accent);
-  border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
-}
-
-.points-badge {
-  background: color-mix(in srgb, var(--accent) 14%, transparent);
-  border-color: color-mix(in srgb, var(--accent) 45%, var(--border));
-  color: var(--accent);
-}
-
-/* ===== HOY: métrica motivadora (km de rodaje) ===== */
-.run-stats {
-  display: flex;
-  padding: 14px 18px;
-  margin-bottom: 12px;
-}
-
-.run-stat {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-}
-
-.run-stat + .run-stat {
-  border-left: 1px solid var(--border);
-}
-
-.run-stat strong {
-  font-family: var(--font-display);
-  font-size: 1.7rem;
-  color: var(--accent);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.01em;
-}
-
-.run-stat span {
-  font-size: 0.72rem;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
+  margin-top: 6px;
 }
 
-/* ===== HOY: lo que toca hoy (plan) ===== */
+.hero-stat-strip {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  border-top: 1px solid var(--border);
+}
+
+.hero-stat {
+  padding: 12px 6px 0;
+  text-align: center;
+  border-right: 1px solid var(--border);
+}
+
+.hero-stat:last-child {
+  border-right: none;
+}
+
+.hero-stat strong {
+  display: block;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 1.35rem;
+  color: var(--accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.hero-stat span {
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+/* ===== HOY: lo que toca hoy (plan) — separador de línea, no tarjeta con
+   barra de acento (eso es justo lo que hace parecer una app genérica). ===== */
 .plan-card {
   display: flex;
   align-items: flex-start;
   gap: 14px;
-  padding: 16px 18px;
-  border-radius: var(--radius);
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
-  border-left: 3px solid var(--accent);
+  padding: 14px 0;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   margin-bottom: 14px;
 }
 
@@ -790,7 +740,7 @@ nav.tabbar a.active .icon {
 .plan-body {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
   min-width: 0;
 }
 
@@ -798,29 +748,30 @@ nav.tabbar a.active .icon {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.7rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   color: var(--text-muted);
 }
 
 .plan-ai {
-  font-size: 0.62rem;
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
   letter-spacing: 0.06em;
-  padding: 2px 7px;
-  border-radius: 999px;
-  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  padding: 2px 6px;
+  border: 1px solid var(--accent);
   color: var(--accent);
 }
 
 .plan-body strong {
-  font-size: 1.05rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 500;
 }
 
 .plan-body p {
-  margin: 3px 0 0;
-  font-size: 0.86rem;
+  margin: 1px 0 0;
+  font-size: 0.84rem;
   color: var(--text-muted);
 }
 
@@ -840,59 +791,59 @@ nav.tabbar a.active .icon {
 }
 
 .week-plan-day {
-  font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
   letter-spacing: 0.02em;
-  width: 18px;
+  width: 14px;
   flex-shrink: 0;
-  text-align: center;
   color: var(--text-muted);
+}
+
+.week-plan-row.today {
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
+  margin: 0 -18px;
+  padding: 9px 18px;
+}
+
+@media (max-width: 380px) {
+  .week-plan-row.today {
+    margin: 0 -14px;
+    padding: 9px 14px;
+  }
 }
 
 .week-plan-row.today .week-plan-day {
   color: var(--accent);
 }
 
-.week-plan-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  background: var(--bg);
-  color: var(--text-muted);
-  flex-shrink: 0;
-}
-
-.week-plan-icon.running {
-  color: var(--accent);
-  background: color-mix(in srgb, var(--accent) 14%, var(--bg));
-}
-
 .week-plan-body {
   flex: 1;
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
 }
 
 .week-plan-body strong {
-  font-size: 0.88rem;
-  font-weight: 600;
+  font-size: 0.86rem;
+  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  display: block;
 }
 
-.week-plan-body p {
-  margin: 0;
-  font-size: 0.72rem;
+.week-plan-kind {
+  flex-shrink: 0;
+  font-family: var(--font-mono);
+  font-size: 0.6rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border: 1px solid var(--border);
   color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+}
+
+.week-plan-kind.run {
+  color: var(--accent);
+  border-color: var(--accent);
 }
 
 .week-plan-move {
@@ -1260,11 +1211,6 @@ input[type="file"] {
   z-index: 1;
 }
 
-.hero-card {
-  position: relative;
-  overflow: hidden;
-}
-
 .hero-card .topo-texture {
   color: var(--text);
   opacity: 0.05;
@@ -1337,8 +1283,6 @@ input[type="file"] {
    (quedan definidas dentro del media query no-preference) ni las de brillo
    continuo de más abajo. */
 @media (prefers-reduced-motion: reduce) {
-  .tier-badge.tier-perfect,
-  .hero-streak.alive svg,
   nav.tabbar a.active .icon {
     animation: none !important;
   }

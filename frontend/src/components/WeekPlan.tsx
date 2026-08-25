@@ -2,15 +2,17 @@ import { useEffect, useState } from "react";
 import { plannedApi } from "../api/planned";
 import type { PlannedWorkout } from "../types";
 import { addDaysIso, todayIsoMadrid, weekdayMadrid } from "../utils/date";
-import { BarbellIcon, LeafIcon, SunIcon } from "./icons";
 
 const WEEKDAY_LABEL = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"];
 const WEEKDAY_SHORT = ["L", "M", "X", "J", "V", "S", "D"];
 
-function planIcon(type: PlannedWorkout["workout_type"] | undefined) {
-  if (type === "RUNNING") return <SunIcon size={18} />;
-  if (type) return <BarbellIcon size={18} />;
-  return <LeafIcon size={18} />;
+// Etiqueta de spec: la categoría fiable que tenemos es workout_type, no el
+// tipo exacto de rodaje (Z2/series/tirada larga viven como texto libre en
+// title/details, generado por el coach — no hay forma fiable de parsearlo).
+function kindTag(type: PlannedWorkout["workout_type"] | undefined): string {
+  if (type === "RUNNING") return "Run";
+  if (type) return "Gym";
+  return "Rest";
 }
 
 /** Plan de la semana en curso, día a día, con opción de mover/intercambiar
@@ -46,20 +48,19 @@ export function WeekPlan() {
 
   return (
     <div className="card week-plan">
-      <h2>Plan de la semana</h2>
+      <h2>Plan semana</h2>
       {days.map((day, i) => {
         const date = addDaysIso(weekStart, i);
         const isToday = date === todayIsoMadrid();
         return (
           <div className={`week-plan-row ${isToday ? "today" : ""}`} key={date}>
             <span className="week-plan-day">{WEEKDAY_SHORT[i]}</span>
-            <span className={`week-plan-icon ${day?.workout_type === "RUNNING" ? "running" : ""}`}>
-              {planIcon(day?.workout_type)}
-            </span>
             <div className="week-plan-body">
-              <strong>{day?.title ?? "Descanso"}</strong>
-              {day?.details && <p>{day.details}</p>}
+              <strong>{day?.title ?? "Descanso activo"}</strong>
             </div>
+            <span className={`week-plan-kind ${day?.workout_type === "RUNNING" ? "run" : ""}`}>
+              {kindTag(day?.workout_type)}
+            </span>
             {day && (
               <select
                 className="week-plan-move"

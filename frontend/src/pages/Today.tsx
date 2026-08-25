@@ -11,7 +11,6 @@ import {
   LeafIcon,
   SunIcon,
 } from "../components/icons";
-import { ProgressRing } from "../components/ProgressRing";
 import { Stepper } from "../components/Stepper";
 import { WeekPlan } from "../components/WeekPlan";
 import type {
@@ -152,7 +151,6 @@ export default function Today() {
   const dueHabits = habits.filter((h) => h.due_today);
   const doneCount = dueHabits.filter((h) => h.done_today).length;
   const completion = score?.completion_rate ?? 0;
-  const perfect = score?.tier === "perfect";
 
   return (
     <div>
@@ -178,48 +176,43 @@ export default function Today() {
       </div>
 
       <main>
-        {/* --- Héroe gamificado: aro de progreso + racha + puntos --- */}
+        {/* --- Héroe: completado del día entre corchetes + franja de specs --- */}
         <div className="hero-card">
           <span className="topo-texture" aria-hidden="true" />
-          <ProgressRing progress={completion} perfect={perfect} size={132}>
-            <span className="hero-pct">{Math.round(completion * 100)}%</span>
-            <span className="hero-sub">
-              {dueHabits.length > 0 ? `${doneCount}/${dueHabits.length}` : "libre"}
+          <div className="hero-tag-row">
+            <span className="hero-id">
+              CIMA <span>· {TIER_LABEL[score?.tier ?? "missed"].toUpperCase()}</span>
             </span>
-          </ProgressRing>
-
-          <div className="hero-side">
-            <div className={`hero-streak ${score && score.streak > 0 ? "alive" : ""}`}>
-              <FlameIcon size={22} />
-              <div>
-                <strong>{score?.streak ?? 0}</strong>
-                <span>{score?.streak === 1 ? "día de racha" : "días de racha"}</span>
-              </div>
+            <span className="hero-date">{friendlyDateLabel(date)}</span>
+          </div>
+          <div className="hero-bracket">
+            <span className="hero-bracket-mark tl" aria-hidden="true" />
+            <span className="hero-bracket-mark tr" aria-hidden="true" />
+            <span className="hero-bracket-mark bl" aria-hidden="true" />
+            <span className="hero-bracket-mark br" aria-hidden="true" />
+            <div className="hero-pct">
+              {Math.round(completion * 100)}
+              <span className="hero-pct-sym">%</span>
             </div>
-            <div className="hero-badges">
-              <span className={`tier-badge tier-${score?.tier ?? "missed"}`}>
-                {TIER_LABEL[score?.tier ?? "missed"]}
-              </span>
-              {score && score.points > 0 && (
-                <span className="points-badge">+{score.points} pts</span>
-              )}
+            <div className="hero-sub">
+              {dueHabits.length > 0 ? `Completado · ${doneCount} de ${dueHabits.length}` : "Día libre"}
+            </div>
+          </div>
+          <div className="hero-stat-strip">
+            <div className="hero-stat">
+              <strong>{score?.streak ?? 0}</strong>
+              <span>Racha días</span>
+            </div>
+            <div className="hero-stat">
+              <strong>{runningStats ? formatKm(runningStats.km_month) : "0"}</strong>
+              <span>Km mes</span>
+            </div>
+            <div className="hero-stat">
+              <strong>{score && score.points > 0 ? `+${score.points}` : "0"}</strong>
+              <span>Puntos</span>
             </div>
           </div>
         </div>
-
-        {/* --- Métrica motivadora: km de rodaje acumulados --- */}
-        {runningStats && (runningStats.km_month > 0 || runningStats.km_year > 0) && (
-          <div className="card run-stats">
-            <div className="run-stat">
-              <strong>{formatKm(runningStats.km_month)}</strong>
-              <span>km este mes</span>
-            </div>
-            <div className="run-stat">
-              <strong>{formatKm(runningStats.km_year)}</strong>
-              <span>km este año</span>
-            </div>
-          </div>
-        )}
 
         {/* --- Tira de la última semana: un aro por día, coloreado por nivel --- */}
         <div className="week-strip">
