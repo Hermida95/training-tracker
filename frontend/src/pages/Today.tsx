@@ -166,6 +166,7 @@ export default function Today() {
       <main>
         {/* --- Héroe gamificado: aro de progreso + racha + puntos --- */}
         <div className="hero-card">
+          <span className="topo-texture" aria-hidden="true" />
           <ProgressRing progress={completion} perfect={perfect} size={132}>
             <span className="hero-pct">{Math.round(completion * 100)}%</span>
             <span className="hero-sub">
@@ -174,7 +175,7 @@ export default function Today() {
           </ProgressRing>
 
           <div className="hero-side">
-            <div className="hero-streak">
+            <div className={`hero-streak ${score && score.streak > 0 ? "alive" : ""}`}>
               <FlameIcon size={22} />
               <div>
                 <strong>{score?.streak ?? 0}</strong>

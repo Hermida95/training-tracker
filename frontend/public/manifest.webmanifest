@@ -1,12 +1,12 @@
 {
-  "name": "Entreno & Hábitos",
-  "short_name": "Entreno",
-  "description": "Seguimiento de entrenamiento, hábitos diarios y pausas activas",
+  "name": "CIMA — Fuerza & Trail",
+  "short_name": "CIMA",
+  "description": "Entreno híbrido de fuerza y trail, hábitos y plan semanal con coach IA",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#131416",
-  "theme_color": "#131416",
+  "background_color": "#14110d",
+  "theme_color": "#14110d",
   "orientation": "portrait",
   "icons": [
     {

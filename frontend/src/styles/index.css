@@ -1,24 +1,29 @@
-/* Estética nórdica: base de grises neutros fríos y un único acento en azul
-   Klein (IKB). Bordes de 1px, radios contenidos y tipografía con aire
-   (versalitas espaciadas en los rótulos). Nada de degradados ni neones:
-   el color solo aparece donde hay que mirar. */
+/* Estética CIMA: gear técnico de montaña. Base carbón cálida (roca/tierra
+   quemada, no gris frío de oficina) + un único acento en naranja señal —el
+   rojo-naranja de baliza/cordino que usa el material de trail de verdad—,
+   más tinta oscura sobre el acento en vez de blanca: ese naranja es tan
+   brillante que el texto negro contrasta mejor, como en la señalética real
+   de senda (fondo naranja, texto negro). Tipografía display condensada en
+   mayúsculas para los rótulos —cartelería de refugio de montaña—, cuerpo en
+   sans del sistema para que el contenido largo siga siendo legible. */
 
 :root {
   color-scheme: dark light;
 
-  --bg: #131416;
-  --bg-elevated: #1a1c1f;
-  --bg-card: #22252966;
-  --border: #2c3035;
-  --text: #e8eaed;
-  --text-muted: #8d949e;
-  --accent: #3d5afe; /* azul Klein, algo aclarado para contrastar sobre fondo oscuro */
-  --accent-strong: #536dfe;
-  --accent-ink: #ffffff; /* texto sobre superficies azules */
-  --danger: #c96a63;
-  --warning: #c9a227;
-  --radius: 10px;
+  --bg: #14110d;
+  --bg-elevated: #1c1812;
+  --bg-card: #241f1766;
+  --border: #322b20;
+  --text: #f2ece0;
+  --text-muted: #9c9184;
+  --accent: #ff4d26; /* naranja señal, tipo baliza de sendero */
+  --accent-strong: #ff6b45;
+  --accent-ink: #1a0a04; /* tinta oscura: sobre naranja brillante contrasta más que el blanco */
+  --danger: #c2495c; /* vino/grosella: se distingue del naranja de marca */
+  --warning: #e8b04b;
+  --radius: 8px;
 
+  --font-display: "Bebas Neue", "Oswald", Impact, Haettenschweiler, sans-serif;
   font-family:
     -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   letter-spacing: 0.01em;
@@ -26,16 +31,16 @@
 
 @media (prefers-color-scheme: light) {
   :root {
-    --bg: #f1f2f4;
-    --bg-elevated: #fafbfc;
+    --bg: #f0e9dc;
+    --bg-elevated: #faf6ee;
     --bg-card: #ffffffb3;
-    --border: #dde0e4;
-    --text: #1c1e21;
-    --text-muted: #6b7280;
-    --accent: #002fa7; /* International Klein Blue puro: sobre fondo claro luce mejor saturado */
-    --accent-strong: #00248a;
+    --border: #ddd0b8;
+    --text: #241f17;
+    --text-muted: #7d7364;
+    --accent: #c7300f; /* más profundo sobre fondo claro: sigue leyéndose como texto/icono */
+    --accent-strong: #a02509;
     --accent-ink: #ffffff;
-    --danger: #a8443c;
+    --danger: #93324a;
   }
 }
 
@@ -75,19 +80,22 @@ h1, h2, h3 {
 }
 
 h1 {
-  font-size: 1.3rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
+  font-family: var(--font-display);
+  font-size: 1.7rem;
+  font-weight: 400;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
 }
 
-/* Rótulos de sección como en la cartelería de un gimnasio boutique:
-   pequeños, en mayúsculas y con mucho tracking. */
+/* Rótulos de sección como una señal de sendero: mayúsculas, condensadas,
+   con el tracking justo (Bebas Neue ya viene apretada de por sí). */
 h2 {
-  font-size: 0.74rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 400;
   color: var(--text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.08em;
   margin-bottom: 12px;
 }
 
@@ -158,8 +166,9 @@ button.ghost {
 button.big {
   width: 100%;
   min-height: 60px;
-  font-size: 1rem;
-  letter-spacing: 0.06em;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
@@ -359,8 +368,9 @@ nav.tabbar a {
   padding: 12px 4px 10px;
   text-decoration: none;
   color: var(--text-muted);
-  font-size: 0.68rem;
-  letter-spacing: 0.1em;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
   display: flex;
   flex-direction: column;
@@ -377,6 +387,20 @@ nav.tabbar .icon {
   align-items: center;
   justify-content: center;
   height: 24px;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Pequeño "pop" elástico al activarse la pestaña: el icono se remonta al
+   entrar en pantalla porque cada página es un componente distinto, así que
+   el navegador reinicia la animación solo. */
+nav.tabbar a.active .icon {
+  animation: tab-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes tab-pop {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.22); }
+  100% { transform: scale(1); }
 }
 
 .set-row {
@@ -550,10 +574,10 @@ nav.tabbar .icon {
   background: transparent;
   border: none;
   color: var(--text);
-  font-size: 1.15rem;
-  font-weight: 600;
+  font-family: var(--font-display);
+  font-size: 1.4rem;
   letter-spacing: 0.02em;
-  text-transform: capitalize;
+  text-transform: uppercase;
 }
 
 /* ===== HOY: héroe con aro de progreso ===== */
@@ -584,8 +608,8 @@ nav.tabbar .icon {
 }
 
 .hero-pct {
-  font-size: 1.7rem;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 2.1rem;
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
@@ -611,6 +635,20 @@ nav.tabbar .icon {
   color: var(--accent);
 }
 
+/* La llama "respira" muy sutilmente cuando hay racha viva: da la sensación
+   de fuego real sin resultar molesto en un dato que se mira todo el rato. */
+.hero-streak.alive svg {
+  animation: flame-flicker 1.8s ease-in-out infinite;
+  transform-origin: 50% 90%;
+}
+
+@keyframes flame-flicker {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 1; }
+  25% { transform: scale(1.06) rotate(-2deg); opacity: 0.92; }
+  50% { transform: scale(0.97) rotate(1deg); opacity: 1; }
+  75% { transform: scale(1.03) rotate(-1deg); opacity: 0.95; }
+}
+
 .hero-streak > div {
   display: flex;
   flex-direction: column;
@@ -618,8 +656,8 @@ nav.tabbar .icon {
 }
 
 .hero-streak strong {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-family: var(--font-display);
+  font-size: 1.8rem;
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
@@ -650,6 +688,13 @@ nav.tabbar .icon {
 .tier-badge.tier-perfect {
   color: var(--warning);
   border-color: color-mix(in srgb, var(--warning) 50%, var(--border));
+  animation: badge-glow 2.4s ease-in-out infinite;
+}
+
+@keyframes badge-glow {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--warning) 45%, transparent); }
+  70% { box-shadow: 0 0 0 6px color-mix(in srgb, var(--warning) 0%, transparent); }
+  100% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--warning) 0%, transparent); }
 }
 
 .tier-badge.tier-great {
@@ -1043,4 +1088,119 @@ input[type="file"] {
   display: flex;
   flex-direction: column;
   gap: 2px;
+}
+
+/* ============================================================
+   Textura de curvas de nivel (mapa topográfico) — el motivo visual
+   de marca. Un SVG de líneas onduladas en `currentColor`, así que
+   basta con fijar `color` en cada sitio para que se adapte al tema;
+   la opacidad la pone el elemento que lo usa, siempre muy baja: es
+   textura de fondo, nunca debe competir con el contenido.
+   ============================================================ */
+.topo-texture {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150'%3E%3Cpath d='M0,20 Q37,5 75,20 T150,20' stroke='currentColor' stroke-width='1' fill='none'/%3E%3Cpath d='M0,55 Q37,75 75,55 T150,55' stroke='currentColor' stroke-width='1' fill='none'/%3E%3Cpath d='M0,95 Q37,110 75,90 T150,100' stroke='currentColor' stroke-width='1' fill='none'/%3E%3Cpath d='M0,130 Q37,115 75,135 T150,125' stroke='currentColor' stroke-width='1' fill='none'/%3E%3C/svg%3E");
+  background-size: 150px 150px;
+}
+
+.login-screen {
+  position: relative;
+  overflow: hidden;
+}
+
+.login-screen .topo-texture {
+  color: var(--accent);
+  opacity: 0.07;
+  z-index: 0;
+}
+
+.login-screen > *:not(.topo-texture) {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-card .topo-texture {
+  color: var(--text);
+  opacity: 0.05;
+  z-index: 0;
+}
+
+.hero-card > *:not(.topo-texture) {
+  position: relative;
+  z-index: 1;
+}
+
+/* ============================================================
+   Animaciones de entrada. Cada página es un componente de React
+   distinto, así que React lo desmonta/monta al cambiar de pestaña:
+   la animación se dispara sola en cada visita, sin JS de por medio.
+   ============================================================ */
+@media (prefers-reduced-motion: no-preference) {
+  main {
+    animation: page-in 0.32s ease both;
+  }
+
+  main > .card,
+  main > .hero-card,
+  main > .plan-card,
+  main > .banner,
+  main > .done-banner,
+  main > .week-strip,
+  main > .score-card {
+    animation: card-in 0.38s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  /* Escalonado: cada tarjeta entra un pelín después que la anterior. */
+  main > *:nth-child(1) { animation-delay: 0.02s; }
+  main > *:nth-child(2) { animation-delay: 0.06s; }
+  main > *:nth-child(3) { animation-delay: 0.1s; }
+  main > *:nth-child(4) { animation-delay: 0.14s; }
+  main > *:nth-child(5) { animation-delay: 0.18s; }
+  main > *:nth-child(n + 6) { animation-delay: 0.2s; }
+
+  .week-day {
+    animation: card-in 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .week-day:nth-child(1) { animation-delay: 0.05s; }
+  .week-day:nth-child(2) { animation-delay: 0.08s; }
+  .week-day:nth-child(3) { animation-delay: 0.11s; }
+  .week-day:nth-child(4) { animation-delay: 0.14s; }
+  .week-day:nth-child(5) { animation-delay: 0.17s; }
+  .week-day:nth-child(6) { animation-delay: 0.2s; }
+  .week-day:nth-child(7) { animation-delay: 0.23s; }
+}
+
+@keyframes page-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes card-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Quien pida menos movimiento, no ve ninguna de las animaciones de arriba
+   (quedan definidas dentro del media query no-preference) ni las de brillo
+   continuo de más abajo. */
+@media (prefers-reduced-motion: reduce) {
+  .tier-badge.tier-perfect,
+  .hero-streak.alive svg,
+  nav.tabbar a.active .icon {
+    animation: none !important;
+  }
 }

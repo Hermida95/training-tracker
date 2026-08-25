@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { BarbellIcon } from "../components/icons";
+import { MountainIcon } from "../components/icons";
 import { useAuth } from "../auth/AuthContext";
 
 type Mode = "login" | "register" | "reset";
@@ -59,12 +59,13 @@ export default function Login() {
 
   return (
     <div className="login-screen">
+      <span className="topo-texture" aria-hidden="true" />
       <div className="login-brand">
         <span className="login-logo">
-          <BarbellIcon size={30} strokeWidth={1.4} />
+          <MountainIcon size={32} strokeWidth={1.5} />
         </span>
-        <h1>Entreno &amp; Hábitos</h1>
-        <p>Tu programa, tus datos.</p>
+        <h1>CIMA</h1>
+        <p>Tu entreno, tu cima.</p>
       </div>
 
       <form className="card login-card" onSubmit={submit}>

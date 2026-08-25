@@ -1,13 +1,19 @@
-# Entreno & Hábitos
+# CIMA
 
 [![CI](https://github.com/Hermida95/training-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Hermida95/training-tracker/actions/workflows/ci.yml)
 [![Deploy](https://github.com/Hermida95/training-tracker/actions/workflows/deploy.yml/badge.svg)](https://github.com/Hermida95/training-tracker/actions/workflows/deploy.yml)
 
-PWA full-stack de seguimiento de entrenamiento y hábitos: rutina de gimnasio con
-periodización de 4 semanas, checklist diario con rachas y puntos, métricas
+PWA full-stack de entreno híbrido fuerza + trail/ultra: rutina de gimnasio
+editable con periodización, checklist diario con rachas y puntos, plan semanal
+generado por un coach IA a partir de tus métricas de Garmin, métricas
 corporales con media semanal, alarma antisedentarismo con notificaciones
-programadas, plan de comidas y cuentas multiusuario. Diseño nórdico minimalista,
-pensada para usarse con el pulgar entre series.
+programadas, plan de comidas y cuentas multiusuario. Diseño de marca "gear
+técnico de montaña" — naranja señal sobre carbón, tipografía de cartelería de
+sendero — pensada para usarse con el pulgar entre series.
+
+> Nota: el repositorio de GitHub sigue llamándose `training-tracker` (cambiar
+> el nombre del repo rompería las URLs de Cloud Run ya desplegadas); CIMA es
+> el nombre de marca de la app en sí, no del repo.
 
 **Stack**: Python 3.12 · FastAPI · SQLAlchemy 2.0 · Pydantic v2 · Alembic ·
 PostgreSQL &nbsp;|&nbsp; React 18 · Vite · TypeScript · PWA + Service Worker

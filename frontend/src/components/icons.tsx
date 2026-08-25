@@ -139,6 +139,16 @@ export function ChevronRightIcon({ size = 22, strokeWidth = 1.8 }: IconProps) {
   );
 }
 
+export function MountainIcon({ size = 22, strokeWidth = 1.6 }: IconProps) {
+  return (
+    <svg {...base(size)} strokeWidth={strokeWidth}>
+      <path d="M2.5 19h19" />
+      <path d="M4 19L9 8l3.5 5L15 7l5 12" />
+      <circle cx="15" cy="7" r="1.1" fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
 export function CheckIcon({ size = 22, strokeWidth = 2 }: IconProps) {
   return (
     <svg {...base(size)} strokeWidth={strokeWidth}>
