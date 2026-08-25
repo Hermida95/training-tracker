@@ -62,6 +62,37 @@ def delete_planned(db: Session, planned: PlannedWorkout) -> None:
     db.commit()
 
 
+def move(db: Session, planned: PlannedWorkout, to_date: datetime.date) -> list[PlannedWorkout]:
+    """Mueve `planned` a `to_date`.
+
+    Si ese día ya tiene un plan, intercambia el CONTENIDO entre ambas filas
+    (cada una conserva su propio id y su propia fecha) en vez de tocar
+    `date`, para no chocar nunca con la unique constraint (user_id, date).
+    Si el día está libre, simplemente mueve la fila; el día de origen queda
+    sin plan (descanso implícito, como ya trata la app en cualquier hueco).
+    """
+    if planned.date == to_date:
+        return [planned]
+
+    target = get_for_date(db, planned.user_id, to_date)
+    if target is None:
+        planned.date = to_date
+        planned.source = "manual"
+        db.commit()
+        db.refresh(planned)
+        return [planned]
+
+    planned.workout_type, target.workout_type = target.workout_type, planned.workout_type
+    planned.title, target.title = target.title, planned.title
+    planned.details, target.details = target.details, planned.details
+    planned.source = "manual"
+    target.source = "manual"
+    db.commit()
+    db.refresh(planned)
+    db.refresh(target)
+    return [planned, target]
+
+
 def replace_week(db: Session, user_id: int, data: WeekPlanReplace) -> list[PlannedWorkout]:
     """Borra los 7 días desde `week_start` e inserta el nuevo plan de la semana."""
     week_end = data.week_start + datetime.timedelta(days=6)

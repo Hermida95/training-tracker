@@ -5,6 +5,7 @@ from fastapi import APIRouter, HTTPException
 from app.core.deps import CurrentUser, DbSession
 from app.crud import planned as crud
 from app.schemas.planned import (
+    PlannedMoveIn,
     PlannedWorkoutIn,
     PlannedWorkoutRead,
     PlannedWorkoutUpdate,
@@ -62,3 +63,12 @@ def delete_planned(planned_id: int, db: DbSession, user: CurrentUser):
     if not planned:
         raise HTTPException(404, "Plan no encontrado")
     crud.delete_planned(db, planned)
+
+
+@router.post("/{planned_id}/move", response_model=list[PlannedWorkoutRead])
+def move_planned(planned_id: int, data: PlannedMoveIn, db: DbSession, user: CurrentUser):
+    """Mueve un día del plan a otra fecha; si esa fecha ya tiene plan, los intercambia."""
+    planned = crud.get_planned(db, user.id, planned_id)
+    if not planned:
+        raise HTTPException(404, "Plan no encontrado")
+    return crud.move(db, planned, data.to_date)

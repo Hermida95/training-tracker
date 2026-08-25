@@ -30,6 +30,10 @@ class PlannedWorkoutUpdate(BaseModel):
     details: str | None = Field(default=None, max_length=2000)
 
 
+class PlannedMoveIn(BaseModel):
+    to_date: datetime.date
+
+
 class WeekPlanReplace(BaseModel):
     """Reemplaza el plan de una semana completa (lo que usa el automatismo).
 
