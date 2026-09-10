@@ -39,15 +39,25 @@ TZ = ZoneInfo("Europe/Madrid")
 
 
 def should_run_now(now: datetime.datetime | None = None) -> bool:
-    """True si es domingo por la tarde-noche en Madrid (ventana 19:00-21:59).
+    """True si "ya toca" generar el plan: domingo desde las 18:00 Madrid, o
+    lunes de madrugada (hasta las 06:00) por si el disparo llegó muy tarde.
 
     El cron de GitHub Actions va en UTC y no ajusta el horario de verano, así
-    que lo disparamos a dos horas UTC candidatas y dejamos que solo la correcta
-    (según la hora local real) siga adelante.
+    que lo disparamos a dos horas UTC candidatas. Además, en repos con poca
+    actividad GitHub puede retrasar un `schedule` varias HORAS respecto a la
+    hora programada (no son minutos, es un retraso real y documentado) — con
+    una ventana estrecha (19:00-21:59) eso hacía que casi ningún domingo se
+    generase el plan, porque para cuando el job por fin arrancaba ya se había
+    salido de la ventana. Se amplía a "domingo tarde-noche o madrugada del
+    lunes" y se combina con un guard de "no repetir si ya se generó hoy" (ver
+    `_already_generated_recently`) para que da igual cuántas veces dispare el
+    cron o lo tarde que llegue: siempre se genera, y como mucho una vez.
     """
     now = now or datetime.datetime.now(TZ)
     now = now.astimezone(TZ)
-    return now.weekday() == 6 and 19 <= now.hour < 22
+    if now.weekday() == 6 and now.hour >= 18:  # domingo desde las 18:00
+        return True
+    return now.weekday() == 0 and now.hour < 6  # lunes de madrugada, disparo muy tardío
 
 
 def next_monday(today: datetime.date) -> datetime.date:
@@ -94,6 +104,29 @@ def _prev_week_adherence(db, user_id: int, week_start: datetime.date) -> tuple[i
     return planned_count, completed_count
 
 
+def _already_generated_recently(db, user_id: int, week_start: datetime.date) -> bool:
+    """True si ya se escribió un plan "ai" de `week_start` en las últimas 18h.
+
+    La ventana de `should_run_now` se amplió a "domingo desde las 18:00 o
+    lunes de madrugada" para sobrevivir a los retrasos reales (a veces de
+    horas) con los que GitHub dispara un `schedule` en un repo con poco
+    tráfico — pero eso significa que los dos disparos candidatos (DST) pueden
+    caer los dos dentro de la ventana el mismo día. Sin este guard, cada uno
+    regeneraría el plan y mandaría su propio email duplicado.
+    """
+    rows = planned_crud.list_planned(
+        db, user_id, week_start, week_start + datetime.timedelta(days=6)
+    )
+    now_utc = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+    for r in rows:
+        if r.source != "ai":
+            continue
+        created = r.created_at.replace(tzinfo=None) if r.created_at.tzinfo else r.created_at
+        if now_utc - created < datetime.timedelta(hours=18):
+            return True
+    return False
+
+
 def plan_and_write(
     email: str,
     week_start: datetime.date,
@@ -102,25 +135,29 @@ def plan_and_write(
     stub_metrics: bool,
     gmail_address: str | None = None,
     gmail_app_password: str | None = None,
+    check_dedup: bool = False,
 ) -> int:
     """Genera el plan de `week_start` (con la semana del macrociclo que toque) y
-    lo escribe. Reutilizado por el cron (semana siguiente) y el bootstrap
-    (semana actual)."""
-    today = datetime.datetime.now(TZ).date()
-
-    metrics = (
-        garmin_metrics.stub()
-        if stub_metrics
-        else garmin_metrics.collect(garmin_metrics.tokenstore_path(), today)
-    )
-    print(metrics.to_prompt_summary())
-
+    lo escribe. Reutilizado por el cron (semana siguiente, `check_dedup=True`)
+    y el bootstrap (semana actual, siempre fuerza la generación)."""
     db = SessionLocal()
     try:
         user = db.scalar(select(User).where(User.email == email.lower()))
         if user is None and not dry_run:
             print(f"No existe la cuenta {email}", file=sys.stderr)
             return 1
+
+        if check_dedup and user and _already_generated_recently(db, user.id, week_start):
+            print(f"Ya se generó el plan de {week_start.isoformat()} hace menos de 18h. Saliendo.")
+            return 0
+
+        today = datetime.datetime.now(TZ).date()
+        metrics = (
+            garmin_metrics.stub()
+            if stub_metrics
+            else garmin_metrics.collect(garmin_metrics.tokenstore_path(), today)
+        )
+        print(metrics.to_prompt_summary())
 
         week_info, week_num = _macro_week_info(db, user.id if user else 0, week_start)
         print(f"Semana {week_num} del macrociclo · {week_info.phase_block}")
@@ -166,7 +203,7 @@ def plan_and_write(
 
 def run(email: str, *, force: bool, dry_run: bool, stub_metrics: bool) -> int:
     if not force and not should_run_now():
-        print("No toca ejecutar ahora (no es domingo tarde en Madrid). Saliendo sin hacer nada.")
+        print("No toca ejecutar ahora (no es domingo tarde ni lunes de madrugada). Saliendo.")
         return 0
     week_start = next_monday(datetime.datetime.now(TZ).date())
     print(f"Planificando la semana del {week_start.isoformat()} para {email}")
@@ -177,6 +214,7 @@ def run(email: str, *, force: bool, dry_run: bool, stub_metrics: bool) -> int:
         stub_metrics=stub_metrics,
         gmail_address=os.environ.get("GMAIL_ADDRESS"),
         gmail_app_password=os.environ.get("GMAIL_APP_PASSWORD"),
+        check_dedup=not force,  # --force (relanzar a mano) sí debe regenerar siempre
     )
 
 

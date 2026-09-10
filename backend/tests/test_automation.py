@@ -1,10 +1,11 @@
 import datetime
 import json
+from dataclasses import dataclass
 from zoneinfo import ZoneInfo
 
 import pytest
 
-from app.automation import coach, email_report, macro, weekly_plan
+from app.automation import coach, email_report, garmin_metrics, macro, weekly_plan
 from app.automation.garmin_metrics import WeeklyMetrics, _parse_activity, stub
 
 MADRID = ZoneInfo("Europe/Madrid")
@@ -38,6 +39,19 @@ def test_should_run_handles_dst_via_utc_trigger():
     # 18:00 UTC en invierno (CET) son las 19:00 en Madrid -> también entra en la ventana
     winter = datetime.datetime(2026, 12, 27, 19, 0, tzinfo=ZoneInfo("UTC"))
     assert weekly_plan.should_run_now(winter)
+
+
+def test_should_run_survives_a_very_delayed_github_trigger():
+    # GitHub puede retrasar un `schedule` varias horas en un repo con poco
+    # tráfico: la ventana cubre desde las 18:00 del domingo hasta las 06:00
+    # del lunes para no perderse la ejecución por eso.
+    assert weekly_plan.should_run_now(datetime.datetime(2026, 8, 30, 23, 45, tzinfo=MADRID))  # dom
+    assert weekly_plan.should_run_now(
+        datetime.datetime(2026, 8, 31, 2, 0, tzinfo=MADRID)
+    )  # lun madrugada
+    assert not weekly_plan.should_run_now(
+        datetime.datetime(2026, 8, 31, 7, 0, tzinfo=MADRID)
+    )  # lun ya laboral
 
 
 def test_next_monday():
@@ -199,6 +213,55 @@ def test_build_report_body_without_plan_that_week():
         stub(), _plan_with_note(), datetime.date(2026, 8, 31), planned_count=0, completed_count=2
     )
     assert "2 (sin plan generado esa semana)" in body
+
+
+def test_already_generated_recently_detects_same_day_ai_plan(monkeypatch):
+    @dataclass
+    class FakeRow:
+        source: str
+        created_at: datetime.datetime
+
+    now = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+    recent = FakeRow(source="ai", created_at=now - datetime.timedelta(hours=2))
+    monkeypatch.setattr(
+        weekly_plan.planned_crud, "list_planned", lambda db, uid, start, end: [recent]
+    )
+    assert weekly_plan._already_generated_recently(None, 1, datetime.date(2026, 8, 31)) is True
+
+
+def test_already_generated_recently_ignores_old_or_manual_plans(monkeypatch):
+    @dataclass
+    class FakeRow:
+        source: str
+        created_at: datetime.datetime
+
+    now = datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+    old = FakeRow(source="ai", created_at=now - datetime.timedelta(hours=30))
+    manual = FakeRow(source="manual", created_at=now - datetime.timedelta(hours=1))
+    monkeypatch.setattr(
+        weekly_plan.planned_crud, "list_planned", lambda db, uid, start, end: [old, manual]
+    )
+    assert weekly_plan._already_generated_recently(None, 1, datetime.date(2026, 8, 31)) is False
+
+
+# --- Resiliencia ante un fallo total de login en Garmin ---
+
+
+def test_collect_falls_back_gracefully_when_garmin_login_fails(monkeypatch):
+    import garminconnect
+
+    class FailingGarmin:
+        def login(self, tokenstore):
+            raise RuntimeError("API Error 401")
+
+    monkeypatch.setattr(garminconnect, "Garmin", lambda: FailingGarmin())
+
+    m = garmin_metrics.collect("fake-tokenstore", datetime.date(2026, 9, 6))
+    assert m.hrv_status is None
+    assert m.recent_activities == []
+    assert any("no se pudo conectar con Garmin" in note for note in m.notes)
+    # El resumen sigue siendo válido para el prompt del coach, no rompe nada.
+    assert "Garmin" in m.to_prompt_summary()
 
 
 def test_send_weekly_email_uses_injected_sender_and_defaults_to_self():

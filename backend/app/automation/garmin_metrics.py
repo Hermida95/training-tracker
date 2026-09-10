@@ -144,10 +144,21 @@ def collect(tokenstore: str, today: datetime.date | None = None) -> WeeklyMetric
     from garminconnect import Garmin
 
     today = today or datetime.date.today()
-    api = Garmin()
-    api.login(tokenstore)  # reanuda sesión desde los tokens del directorio
-
     m = WeeklyMetrics()
+
+    try:
+        api = Garmin()
+        api.login(tokenstore)  # reanuda sesión desde los tokens del directorio
+    except Exception as e:  # noqa: BLE001 - login roto no debe tumbar el pipeline entero
+        # Sin login no hay nada más que intentar (ninguna métrica de abajo
+        # funcionaría). El coach sigue generando el plan solo con el
+        # macrociclo, sin ajuste por recuperación esta semana, y el aviso
+        # queda visible tanto en el prompt como en el email semanal.
+        m.notes.append(
+            f"no se pudo conectar con Garmin esta semana (tokens caducados? ver AUTOMATION.md): {e}"
+        )
+        return m
+
     dates = _last_7_dates(today)
 
     # --- HRV (último dato semanal disponible) ---
