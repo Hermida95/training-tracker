@@ -248,13 +248,22 @@ def test_already_generated_recently_ignores_old_or_manual_plans(monkeypatch):
 
 
 def test_collect_falls_back_gracefully_when_garmin_login_fails(monkeypatch):
-    import garminconnect
+    # `garminconnect` solo se instala para el workflow de automatización (ver
+    # requirements-automation.txt), no en el job normal de tests — así que no
+    # podemos depender de que el paquete real esté instalado aquí. Se inyecta
+    # un módulo falso en sys.modules: `collect()` hace `from garminconnect
+    # import Garmin` de forma perezosa (dentro de la función), así que
+    # encuentra este módulo en la caché de imports sin tocar el real.
+    import sys
+    import types
 
     class FailingGarmin:
         def login(self, tokenstore):
             raise RuntimeError("API Error 401")
 
-    monkeypatch.setattr(garminconnect, "Garmin", lambda: FailingGarmin())
+    fake_module = types.ModuleType("garminconnect")
+    fake_module.Garmin = FailingGarmin
+    monkeypatch.setitem(sys.modules, "garminconnect", fake_module)
 
     m = garmin_metrics.collect("fake-tokenstore", datetime.date(2026, 9, 6))
     assert m.hrv_status is None
