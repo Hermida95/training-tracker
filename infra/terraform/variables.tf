@@ -88,3 +88,35 @@ variable "github_repo" {
   description = "Repositorio de GitHub autorizado a desplegar, en formato 'usuario/repo' (ej. 'miguel/training-tracker'). Es el candado del Workload Identity: solo los workflows de ESTE repo pueden pedir credenciales de deploy (ver cicd.tf)."
   type        = string
 }
+
+# -----------------------------------------------------------------------------
+# Recordatorios por Telegram (ver README → "Recordatorios por Telegram" y
+# secrets.tf / scheduler.tf). El scheduler_shared_secret NO es una variable:
+# se genera solo con random_password, igual que el JWT secret, porque nadie
+# necesita elegir su valor a mano.
+# -----------------------------------------------------------------------------
+
+variable "telegram_bot_token" {
+  description = "Token del bot de Telegram (@BotFather). Vacío = la API no llama nunca a Telegram y los crons de abajo no envían nada."
+  type        = string
+  default     = ""
+  sensitive   = true
+}
+
+variable "telegram_morning_cron" {
+  description = "Cron (formato unix-cron) del recordatorio de rutina de mañana, en la zona horaria de app_timezone."
+  type        = string
+  default     = "0 7 * * *" # 07:00
+}
+
+variable "telegram_meal_cron" {
+  description = "Cron del recordatorio de la comida principal."
+  type        = string
+  default     = "0 12 * * *" # 12:00
+}
+
+variable "telegram_training_cron" {
+  description = "Cron del recordatorio de la sesión de gym/running del día. Ajusta a tu hora habitual de entreno."
+  type        = string
+  default     = "0 19 * * *" # 19:00
+}

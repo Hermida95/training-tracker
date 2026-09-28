@@ -64,3 +64,55 @@ resource "google_secret_manager_secret_version" "jwt_secret" {
   secret      = google_secret_manager_secret.jwt_secret.id
   secret_data = random_password.jwt_secret.result
 }
+
+# -----------------------------------------------------------------------------
+# TELEGRAM_BOT_TOKEN: el token del bot que manda los recordatorios (ver
+# app/automation/telegram_service.py). A diferencia de los dos secretos de
+# arriba, este NO lo genera Terraform: lo emite @BotFather y hay que pegarlo
+# en `terraform.tfvars` (o pasarlo por TF_VAR_telegram_bot_token). Vacío =
+# la app arranca igual, simplemente no llama nunca a la Bot API.
+# -----------------------------------------------------------------------------
+resource "google_secret_manager_secret" "telegram_bot_token" {
+  project   = var.project_id
+  secret_id = "${var.app_name}-telegram-bot-token"
+
+  replication {
+    auto {}
+  }
+
+  depends_on = [google_project_service.apis]
+}
+
+resource "google_secret_manager_secret_version" "telegram_bot_token" {
+  secret      = google_secret_manager_secret.telegram_bot_token.id
+  secret_data = var.telegram_bot_token
+}
+
+# -----------------------------------------------------------------------------
+# SCHEDULER_SHARED_SECRET: lo que Cloud Scheduler manda en la cabecera
+# X-Scheduler-Secret para demostrar que la llamada a /internal/notify/* viene
+# de verdad de nuestros crons y no de cualquiera que adivine la URL. Generado
+# por Terraform, igual que el JWT secret: nadie necesita elegir ni recordar
+# este valor, solo que coincida a los dos lados (Cloud Run y Cloud Scheduler),
+# y eso lo garantiza que ambos lean la MISMA versión del MISMO secreto.
+# -----------------------------------------------------------------------------
+resource "random_password" "scheduler_shared_secret" {
+  length  = 48
+  special = false
+}
+
+resource "google_secret_manager_secret" "scheduler_shared_secret" {
+  project   = var.project_id
+  secret_id = "${var.app_name}-scheduler-shared-secret"
+
+  replication {
+    auto {}
+  }
+
+  depends_on = [google_project_service.apis]
+}
+
+resource "google_secret_manager_secret_version" "scheduler_shared_secret" {
+  secret      = google_secret_manager_secret.scheduler_shared_secret.id
+  secret_data = random_password.scheduler_shared_secret.result
+}

@@ -80,6 +80,28 @@ resource "google_cloud_run_v2_service" "api" {
         }
       }
 
+      # Recordatorios por Telegram (ver app/automation/telegram_service.py y
+      # app/api/v1/endpoints/internal.py). Mismo mecanismo de secret_key_ref
+      # que arriba: la app los recibe como env vars normales.
+      env {
+        name = "TELEGRAM_BOT_TOKEN"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.telegram_bot_token.secret_id
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name = "SCHEDULER_SHARED_SECRET"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.scheduler_shared_secret.secret_id
+            version = "latest"
+          }
+        }
+      }
+
       # Solo si usamos Cloud SQL: monta el volumen especial /cloudsql (ver
       # bloque `volumes` más abajo) para que psycopg pueda abrir el socket
       # Unix que espera la connection string de secrets.tf.
@@ -133,5 +155,7 @@ resource "google_cloud_run_v2_service" "api" {
     google_project_service.apis,
     google_secret_manager_secret_version.database_url,
     google_secret_manager_secret_version.jwt_secret,
+    google_secret_manager_secret_version.telegram_bot_token,
+    google_secret_manager_secret_version.scheduler_shared_secret,
   ]
 }
