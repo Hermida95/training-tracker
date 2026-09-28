@@ -8,9 +8,10 @@ Actions. Flujo:
      de los próximos 7 días en JSON estricto.
   4. Escribe ese plan en la BD del usuario (tabla planned_workouts), reemplazando
      la semana entrante.
-  5. Si hay credenciales de Gmail configuradas, envía un informe breve por
-     email (cómo fue la semana que termina + el ajuste decidido). Es un
-     extra: si falla, no tumba el resto del pipeline (el plan ya se escribió).
+  5. Si hay TELEGRAM_BOT_TOKEN configurado y el usuario vinculó su chat (ver
+     `PATCH /users/me/telegram`), le manda un informe breve por Telegram (cómo
+     fue la semana que termina + el ajuste decidido). Es un extra: si falla,
+     no tumba el resto del pipeline (el plan ya se escribió).
 
 Uso:
   python -m app.automation.weekly_plan <email>              # ejecución real
@@ -27,7 +28,7 @@ from zoneinfo import ZoneInfo
 
 from sqlalchemy import select
 
-from app.automation import coach, email_report, garmin_metrics, macro
+from app.automation import coach, garmin_metrics, macro, telegram_service, weekly_report
 from app.core.database import SessionLocal
 from app.crud import planned as planned_crud
 from app.crud import workout as workout_crud
@@ -127,14 +128,29 @@ def _already_generated_recently(db, user_id: int, week_start: datetime.date) -> 
     return False
 
 
+def _send_weekly_report(
+    user: User | None, telegram_bot_token: str | None, report_body: str
+) -> None:
+    """Envía el informe semanal por Telegram si hay token y el usuario vinculó
+    su chat (ver `PATCH /users/me/telegram`). Extraída para poder testearla
+    sin necesitar una BD real ni golpear la Bot API."""
+    if not (user and user.telegram_chat_id and telegram_bot_token):
+        print("Sin TELEGRAM_BOT_TOKEN o chat_id vinculado: no se envía informe semanal.")
+        return
+    try:
+        telegram_service.send_message(telegram_bot_token, user.telegram_chat_id, report_body)
+        print("Informe semanal enviado por Telegram.")
+    except Exception as e:  # noqa: BLE001 - el informe es un extra, no debe tumbar el run
+        print(f"No se pudo enviar el informe semanal por Telegram: {e}", file=sys.stderr)
+
+
 def plan_and_write(
     email: str,
     week_start: datetime.date,
     *,
     dry_run: bool,
     stub_metrics: bool,
-    gmail_address: str | None = None,
-    gmail_app_password: str | None = None,
+    telegram_bot_token: str | None = None,
     check_dedup: bool = False,
 ) -> int:
     """Genera el plan de `week_start` (con la semana del macrociclo que toque) y
@@ -171,31 +187,19 @@ def plan_and_write(
         planned_count, completed_count = (
             _prev_week_adherence(db, user.id, week_start) if user else (0, 0)
         )
-        report_body = email_report.build_report_body(
+        report_body = weekly_report.build_report_body(
             metrics, plan, week_start, planned_count, completed_count
         )
         print(f"\n--- Informe semanal ---\n{report_body}\n")
 
         if dry_run:
-            print("[dry-run] No se escribe nada en la BD ni se envía el email.")
+            print("[dry-run] No se escribe nada en la BD ni se envía el informe.")
             return 0
 
         rows = planned_crud.replace_week(db, user.id, _plan_to_week_replace(plan, week_start))
         print(f"\nPlan escrito: {len(rows)} días planificados para {email}.")
 
-        if gmail_address and gmail_app_password:
-            try:
-                email_report.send_weekly_email(
-                    gmail_address,
-                    gmail_app_password,
-                    f"CIMA — informe semanal ({week_start.isoformat()})",
-                    report_body,
-                )
-                print("Informe semanal enviado por email.")
-            except Exception as e:  # noqa: BLE001 - el email es un extra, no debe tumbar el run
-                print(f"No se pudo enviar el email semanal: {e}", file=sys.stderr)
-        else:
-            print("GMAIL_ADDRESS/GMAIL_APP_PASSWORD no configurados: no se envía email semanal.")
+        _send_weekly_report(user, telegram_bot_token, report_body)
     finally:
         db.close()
     return 0
@@ -212,8 +216,7 @@ def run(email: str, *, force: bool, dry_run: bool, stub_metrics: bool) -> int:
         week_start,
         dry_run=dry_run,
         stub_metrics=stub_metrics,
-        gmail_address=os.environ.get("GMAIL_ADDRESS"),
-        gmail_app_password=os.environ.get("GMAIL_APP_PASSWORD"),
+        telegram_bot_token=os.environ.get("TELEGRAM_BOT_TOKEN"),
         check_dedup=not force,  # --force (relanzar a mano) sí debe regenerar siempre
     )
 

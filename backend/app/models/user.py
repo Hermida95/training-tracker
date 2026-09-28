@@ -17,6 +17,11 @@ class User(Base):
     # Hash bcrypt del código de recuperación (un solo uso). None = el usuario
     # no ha generado ninguno; si olvida la contraseña sin él, toca BD a mano.
     recovery_code_hash: Mapped[str | None] = mapped_column(default=None)
+    # Chat id de Telegram (numérico, pero se guarda como texto: es como lo
+    # devuelve @userinfobot y así se evita cualquier límite de rango de int).
+    # None = el usuario no ha vinculado Telegram; los cron de recordatorios
+    # simplemente lo ignoran.
+    telegram_chat_id: Mapped[str | None] = mapped_column(default=None)
     created_at: Mapped[datetime.datetime] = mapped_column(
         default=lambda: datetime.datetime.now(datetime.UTC)
     )

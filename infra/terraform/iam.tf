@@ -22,6 +22,20 @@ resource "google_secret_manager_secret_iam_member" "api_reads_jwt_secret" {
   member    = "serviceAccount:${google_service_account.api_runtime.email}"
 }
 
+# 1c) Igual para los dos secretos de los recordatorios por Telegram (ver
+#     secrets.tf): el token del bot y el secreto compartido con Cloud Scheduler.
+resource "google_secret_manager_secret_iam_member" "api_reads_telegram_bot_token" {
+  secret_id = google_secret_manager_secret.telegram_bot_token.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.api_runtime.email}"
+}
+
+resource "google_secret_manager_secret_iam_member" "api_reads_scheduler_shared_secret" {
+  secret_id = google_secret_manager_secret.scheduler_shared_secret.id
+  role      = "roles/secretmanager.secretAccessor"
+  member    = "serviceAccount:${google_service_account.api_runtime.email}"
+}
+
 # 2) Si usamos Cloud SQL, la service account necesita permiso para abrir el
 #    túnel del proxy integrado hacia la instancia (sin esto, el volumen
 #    cloud_sql_instance de cloud_run_api.tf se monta pero las conexiones

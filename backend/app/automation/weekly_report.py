@@ -1,51 +1,21 @@
-"""Informe semanal por email (Gmail SMTP).
+"""Texto del informe semanal (entrega por Telegram, ver `weekly_plan.py`).
 
-Se dispara cada domingo desde `weekly_plan.py`, después de escribir el plan
-nuevo. Usa smtplib directo con una contraseña de aplicación de Gmail —ni la
-contraseña normal de la cuenta ni un servicio de terceros—, así que no añade
-ninguna dependencia nueva ni cuenta que crear.
+Antes se enviaba por Gmail SMTP; se cambió a Telegram para reutilizar el
+mismo bot y token que los recordatorios diarios (`app/automation/
+telegram_service.py`) en vez de mantener una segunda credencial (contraseña
+de aplicación de Gmail) que además no daba ningún aviso claro si fallaba.
 
 `build_report_body` es una función pura (sin red, fácil de testear); el envío
-en sí usa un `sender` inyectable, igual que `coach.generate_plan(..., runner=)`.
-Si el envío falla, `weekly_plan.py` lo captura y sigue: el plan ya escrito es
-lo importante, el email es un extra.
+en sí lo hace `weekly_plan.py` con `telegram_service.send_message`. Si el
+envío falla, `weekly_plan.py` lo captura y sigue: el plan ya escrito es lo
+importante, el informe es un extra.
 """
 
 import datetime
-import smtplib
-from email.mime.text import MIMEText
 
 from app.automation.garmin_metrics import WeeklyMetrics
 
-GMAIL_SMTP_HOST = "smtp.gmail.com"
-GMAIL_SMTP_PORT = 587
-
 _WEEKDAY_NAMES = ["Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"]
-
-
-def _default_smtp_send(
-    address: str, app_password: str, to_addr: str, subject: str, body_text: str
-) -> None:
-    msg = MIMEText(body_text, "plain", "utf-8")
-    msg["Subject"] = subject
-    msg["From"] = address
-    msg["To"] = to_addr
-    with smtplib.SMTP(GMAIL_SMTP_HOST, GMAIL_SMTP_PORT, timeout=20) as server:
-        server.starttls()
-        server.login(address, app_password)
-        server.send_message(msg)
-
-
-def send_weekly_email(
-    address: str,
-    app_password: str,
-    subject: str,
-    body_text: str,
-    to_addr: str | None = None,
-    sender=_default_smtp_send,
-) -> None:
-    """Envía el informe. `to_addr` por defecto es la propia cuenta (autoenvío)."""
-    sender(address, app_password, to_addr or address, subject, body_text)
 
 
 def build_report_body(

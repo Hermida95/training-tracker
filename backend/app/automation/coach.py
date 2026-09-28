@@ -103,7 +103,13 @@ def _run_claude(prompt: str) -> str:
         timeout=180,
     )
     if proc.returncode != 0:
-        raise RuntimeError(f"claude -p falló ({proc.returncode}): {proc.stderr[:500]}")
+        # stderr suele venir vacío cuando el CLI falla en el arranque (token
+        # OAuth caducado, onboarding pendiente...); volcar también stdout es lo
+        # único que ha dado pistas reales la última vez que esto pasó.
+        raise RuntimeError(
+            f"claude -p falló ({proc.returncode}). stderr: {proc.stderr[:500]!r} "
+            f"stdout: {proc.stdout[:500]!r}"
+        )
     # --output-format json envuelve la respuesta; el texto está en .result
     try:
         envelope = json.loads(proc.stdout)

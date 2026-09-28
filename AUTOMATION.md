@@ -13,9 +13,12 @@ Actions:
 3. Escribe ese plan en tu cuenta (tabla `planned_workouts`), y lo ves en **HOY**
    como "Hoy toca …" y en el nuevo "Plan de la semana" (con opción de mover o
    intercambiar días si alguno no puede ser).
-4. Si configuraste Gmail (opcional, ver secreto 5-6), te manda un **informe
-   breve por email**: cómo fue la semana que termina (entrenos completados,
-   km reales, recuperación) y el ajuste decidido para la que empieza.
+4. Si configuraste `TELEGRAM_BOT_TOKEN` (opcional, ver secreto 5) y vinculaste
+   tu chat en la app, te manda un **informe breve por Telegram**: cómo fue la
+   semana que termina (entrenos completados, km reales, recuperación) y el
+   ajuste decidido para la que empieza. Es el mismo bot que los recordatorios
+   diarios (ver README → "Recordatorios por Telegram") — no hay que crear uno
+   distinto.
 
 ```
 GitHub Actions (dom 20:00) ─▶ app/automation/weekly_plan.py
@@ -23,21 +26,23 @@ GitHub Actions (dom 20:00) ─▶ app/automation/weekly_plan.py
         │                          │  2. Claude  (claude -p, tu Pro)
         │                          ▼
         ├──────────────────▶  Neon (planned_workouts)  ─▶  se ve en HOY
-        └──────────────────▶  Gmail (informe semanal, opcional)
+        └──────────────────▶  Telegram (informe semanal, opcional)
 ```
 
 **Coste: 0 €.** Actions es gratis, Neon es gratis, y la IA va dentro de tu Pro.
 
-Si un domingo falla, **GitHub te manda un email** automáticamente. Para
-relanzarlo a mano: repo → **Actions → Weekly plan → Run workflow**.
+Si un domingo falla, **GitHub te manda un email** automáticamente (eso es
+GitHub avisando de que el *workflow* falló, no tiene nada que ver con el
+informe por Telegram — ver "Solución de problemas" más abajo). Para relanzarlo
+a mano: repo → **Actions → Weekly plan → Run workflow**.
 
 ---
 
 ## Puesta en marcha (una vez, ~15 min)
 
-Los 4 primeros secretos son obligatorios; los dos de Gmail son opcionales
-(sin ellos, todo funciona igual salvo que no llega el informe por email).
-Los configuras tú en GitHub
+Los 4 primeros secretos son obligatorios; el de Telegram es opcional (sin él,
+todo funciona igual salvo que no llega el informe semanal). Los configuras tú
+en GitHub
 (*Settings → Secrets and variables → Actions → New repository secret*).
 Nunca pegues credenciales en el chat ni en el código.
 
@@ -84,24 +89,45 @@ tar -czf - -C "$HOME/.garminconnect" . | base64 | pbcopy
 > Cuando los tokens caduquen (~6 meses) o dejen de funcionar, vuelve a
 > generarlos con tu MCP/login de Garmin y repite este paso.
 
-### 5-6. `GMAIL_ADDRESS` / `GMAIL_APP_PASSWORD` — informe semanal (opcional)
+### 5. `TELEGRAM_BOT_TOKEN` — informe semanal (opcional)
 
-Sin servicio nuevo ni factura: se envía por SMTP con tu propia cuenta de
-Gmail, de ti para ti.
+El mismo bot que usan los recordatorios diarios (ver README →
+"Recordatorios por Telegram"): si ya lo configuraste ahí, es el mismo valor,
+solo hay que añadirlo también como secreto de este workflow.
 
-1. Activa la verificación en dos pasos en tu cuenta de Google, si no la
-   tienes ya (la requiere Gmail para generar contraseñas de aplicación).
-2. Ve a [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
-   y genera una contraseña de aplicación nueva (cualquier nombre, p. ej.
-   "CIMA weekly report"). Son 16 caracteres sin espacios.
-3. `GMAIL_ADDRESS` = tu dirección de Gmail. `GMAIL_APP_PASSWORD` = esos 16
-   caracteres (no tu contraseña normal de Google, esa no funcionaría aquí).
+1. Si aún no tienes bot, créalo con [@BotFather](https://t.me/BotFather)
+   (`/newbot`) y copia el token.
+2. Pégalo en el secreto `TELEGRAM_BOT_TOKEN` de este repo.
+3. Vincula tu chat_id desde la app (`PATCH /users/me/telegram`, ver README) —
+   sin eso, el bot no sabe a quién escribirle aunque el token sea válido.
 
-El email llega a la misma cuenta que lo envía. Si algún domingo el envío
-falla (credenciales caducadas, límite de Gmail...), no afecta al plan: ya se
-ha escrito en la app antes de intentar mandar el correo.
+Si algún domingo el envío falla (token revocado, chat sin vincular...), no
+afecta al plan: ya se ha escrito en la app antes de intentar mandar el aviso.
 
 ---
+
+## Solución de problemas
+
+Si un domingo el workflow falla, mira primero el log del paso **"Generate and
+write weekly plan"** (*Actions → Weekly plan → la ejecución en rojo*). Las dos
+causas que ya se han dado:
+
+- **`claude -p falló (N)` con `stderr` vacío**: casi siempre `CLAUDE_CODE_OAUTH_TOKEN`
+  caducado o revocado. Regénéralo (`claude setup-token` en tu Mac, con sesión
+  Pro iniciada) y actualiza el secreto. Si el log muestra algo en `stdout`
+  (versión reciente del script, ver `coach._run_claude`), esa pista suele
+  bastar para saber si es el token o un cambio del propio CLI (`npm install -g
+  @anthropic-ai/claude-code` instala siempre la última versión, sin pin: si
+  esto empieza a fallar justo tras una actualización del paquete, prueba a
+  fijar una versión conocida-buena en el workflow).
+- **`Failed to retrieve social profile` / "tokens caducados"**: los tokens de
+  Garmin llevan ~6 meses de vida. Repite el paso 4 de arriba. Esto NO tumba el
+  workflow por sí solo (el plan se genera igual, sin métricas de recuperación),
+  pero degrada la calidad del ajuste semanal.
+
+Ninguna de las dos tiene que ver con el informe de Telegram: el envío del
+informe es el ÚLTIMO paso del script, así que si el workflow falla antes de
+llegar ahí (como en los dos casos de arriba), ni siquiera se intenta mandar.
 
 ## Probarlo sin esperar al domingo
 

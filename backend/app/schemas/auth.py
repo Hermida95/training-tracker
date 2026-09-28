@@ -11,6 +11,7 @@ class UserRead(BaseModel):
     created_at: datetime.datetime
     has_recovery_code: bool = False
     is_admin: bool = False
+    telegram_chat_id: str | None = None
 
 
 class RegisterRequest(BaseModel):

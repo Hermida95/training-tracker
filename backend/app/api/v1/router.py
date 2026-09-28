@@ -6,15 +6,20 @@ from app.api.v1.endpoints import (
     breaks,
     export,
     habits,
+    internal,
     invites,
     menu,
     planned,
     stats,
+    telegram,
+    today,
+    users,
     workouts,
 )
 
 api_router = APIRouter(prefix="/api/v1")
 api_router.include_router(auth.router)
+api_router.include_router(users.router)
 api_router.include_router(invites.router)
 api_router.include_router(menu.router)
 api_router.include_router(habits.router)
@@ -24,3 +29,6 @@ api_router.include_router(body_metrics.router)
 api_router.include_router(breaks.router)
 api_router.include_router(stats.router)
 api_router.include_router(export.router)
+api_router.include_router(today.router)
+api_router.include_router(internal.router)
+api_router.include_router(telegram.router)

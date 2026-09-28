@@ -44,6 +44,10 @@ PostgreSQL &nbsp;|&nbsp; React 18 · Vite · TypeScript · PWA + Service Worker
   min (L-V, 08:30-15:00 Europe/Madrid) que funcionan con el móvil bloqueado,
   con acciones "Hecho" / "Posponer 5 min"
 - 🍴 **Menú**: sube tu plan de comidas (foto/PDF/texto) y tenlo siempre a mano
+- 📲 **Recordatorios por Telegram** (opcional): tres avisos diarios (rutina de mañana, comida,
+  sesión de gym/running) vía Cloud Scheduler + bot de Telegram, con comando `/hoy` — sin depender
+  de Notification Triggers, que no tiene soporte en iOS Safari. Detalle en
+  [Recordatorios por Telegram](#recordatorios-por-telegram)
 - 🔐 **Multiusuario**: cuentas con JWT, datos completamente aislados por usuario,
   registro cerrado con códigos de invitación que reparte el administrador,
   recuperación de contraseña sin email (código de un solo uso), rate limiting
@@ -212,6 +216,76 @@ offset real de esa zona en ese instante.
 
 ---
 
+## Recordatorios por Telegram
+
+Alternativa a la alarma antisedentarismo de arriba para tres avisos concretos del día — **rutina
+de mañana, comida principal, sesión de gym/running** — que no dependen del service worker ni de
+que el móvil tenga la PWA abierta: llegan por Telegram desde el backend, sin las limitaciones de
+Notification Triggers (sin soporte real en iOS Safari, lanzamiento inestable en Chrome/Android).
+
+### Vincular tu chat de Telegram
+
+1. Abre una conversación con **[@userinfobot](https://t.me/userinfobot)** en Telegram y mándale
+   cualquier mensaje: te responde con tu `Id` (un número, puede empezar por `-` si es un grupo).
+2. Vincúlalo a tu cuenta con:
+
+   ```bash
+   curl -X PATCH "$API_URL/api/v1/users/me/telegram" \
+     -H "Authorization: Bearer $TU_TOKEN" \
+     -H "Content-Type: application/json" \
+     -d '{"chat_id": "TU_ID_DE_USERINFOBOT"}'
+   ```
+
+   Para desvincular (dejar de recibir recordatorios), repite la llamada con `"chat_id": null`.
+3. Habla con tu bot (el que creaste en [@BotFather](https://t.me/BotFather) — ver más abajo) y
+   mándale `/hoy`: te devuelve el mismo resumen que ves en `GET /api/v1/today`.
+
+### Cómo funciona por dentro
+
+```
+Cloud Scheduler (07:00 / 12:00 / hora de entreno, Europe/Madrid)
+        │  POST + X-Scheduler-Secret
+        ▼
+/api/v1/internal/notify/{morning,meal,training}
+        │  para cada usuario con telegram_chat_id
+        ▼
+app/utils/today.py (build_today_summary)  ──▶  app/automation/telegram_service.py  ──▶  Telegram
+```
+
+- **`GET /api/v1/today`**: rutina de mañana (hábitos que tocan hoy y si ya se hicieron), la comida
+  del último menú subido, y la sesión de gym/running del día (con periodización si es de gimnasio).
+  Es la MISMA función (`app/utils/today.py`) que usan los tres crons y el comando `/hoy` — no hay
+  tres implementaciones distintas de "qué toca hoy".
+- **Los tres `/internal/notify/*`** los llama únicamente Cloud Scheduler (ver
+  `infra/terraform/scheduler.tf`), nunca el navegador: van protegidos con un secreto compartido en
+  la cabecera `X-Scheduler-Secret` (Secret Manager, comparación en tiempo constante) en vez de JWT,
+  porque no hay un usuario logueado detrás de la llamada.
+- **El comando `/hoy`** llega por un webhook de Telegram (`POST /telegram/webhook/{token}`, sin
+  prefijo `/api/v1` porque no es parte de la API pública): el propio `TELEGRAM_BOT_TOKEN` hace de
+  secreto en la URL (patrón habitual en bots de Telegram), así no hace falta un tercer secreto solo
+  para esto. Regístralo una vez, tras desplegar:
+
+  ```bash
+  curl "https://api.telegram.org/bot$TELEGRAM_BOT_TOKEN/setWebhook?url=$API_URL/telegram/webhook/$TELEGRAM_BOT_TOKEN"
+  ```
+
+### Puesta en marcha
+
+1. Crea un bot con [@BotFather](https://t.me/BotFather) (`/newbot`) y copia el token.
+2. En local, ponlo en `.env` como `TELEGRAM_BOT_TOKEN` (ver `.env.example`); en producción va en
+   `terraform.tfvars` como `telegram_bot_token` (Terraform lo sube a Secret Manager, ver
+   `infra/terraform/secrets.tf`). `SCHEDULER_SHARED_SECRET` no lo eliges tú: lo genera Terraform
+   solo, igual que `SECRET_KEY`.
+3. `terraform apply` crea los tres `google_cloud_scheduler_job` (horarios en
+   `telegram_morning_cron` / `telegram_meal_cron` / `telegram_training_cron`, por defecto
+   07:00 / 12:00 / 19:00 Europe/Madrid — ajústalos a tu horario real de entreno).
+4. Registra el webhook con el `curl` de arriba y vincula tu chat_id como se explica más arriba.
+
+Sin `TELEGRAM_BOT_TOKEN` configurado, todo lo demás sigue funcionando igual: los endpoints
+`/internal/notify/*` simplemente no envían nada (fail-safe, no fail-open).
+
+---
+
 ## Despliegue en GCP Cloud Run — paso a paso
 
 > **La guía definitiva y actualizada está en [DEPLOY.md](DEPLOY.md)**: Neon +
@@ -328,11 +402,12 @@ una clave JSON descargada.
 | `apis.tf` | Habilita las APIs de GCP necesarias | Un proyecto nuevo las tiene todas apagadas |
 | `artifact_registry.tf` | Repo Docker | Dónde viven las imágenes de `api` y `front` |
 | `cloud_sql.tf` | Instancia Postgres + BD + usuario (condicional) | Base de datos gestionada, solo si `use_cloud_sql = true` |
-| `secrets.tf` | Secret Manager con `DATABASE_URL` | La contraseña de la BD nunca queda en texto plano en la config del servicio |
+| `secrets.tf` | Secret Manager con `DATABASE_URL`, `SECRET_KEY`, `TELEGRAM_BOT_TOKEN` y `SCHEDULER_SHARED_SECRET` | Nada sensible en texto plano en la config del servicio |
 | `service_accounts.tf` | Identidad dedicada para el backend | Principio de menor privilegio, en vez de la SA de Compute Engine por defecto |
-| `iam.tf` | Quién puede leer el secreto / invocar los servicios | Cloud Run público + acceso mínimo al secreto |
+| `iam.tf` | Quién puede leer cada secreto / invocar los servicios | Cloud Run público + acceso mínimo a cada secreto |
 | `cloud_run_api.tf` | Servicio Cloud Run del backend | Incluye el volumen especial para el proxy de Cloud SQL |
 | `cloud_run_front.tf` | Servicio Cloud Run del frontend | nginx sirviendo el bundle estático |
+| `scheduler.tf` | 3 `google_cloud_scheduler_job` (recordatorios de Telegram) | Ver [Recordatorios por Telegram](#recordatorios-por-telegram) |
 | `outputs.tf` | URLs finales | Para no ir a buscarlas a la consola |
 
 Cada recurso individual tiene un comentario explicando qué es y por qué está ahí — es la parte
@@ -353,6 +428,11 @@ por FastAPI en `/docs` (Swagger UI) y `/redoc`. Resumen:
   o texto pegado; `/menu/{id}/file` sirve el binario con el token
 - `/stats/monthly` — resumen del mes
 - `/export?format=json|text` — resumen del mes listo para pegar a un coach IA
+- `/today` — rutina de mañana, comida y sesión del día en una sola llamada; `/users/me/telegram`
+  vincula el chat_id que usan los recordatorios (ver [Recordatorios por Telegram](#recordatorios-por-telegram))
+- `/internal/notify/{morning,meal,training}` — SOLO Cloud Scheduler, protegidos por
+  `X-Scheduler-Secret`; y `/telegram/webhook/{token}` (sin prefijo `/api/v1`) para el comando `/hoy`
+  del bot
 
 La auditoría de seguridad pre-despliegue, con los riesgos aceptados y el
 checklist de producción, está en [SECURITY.md](SECURITY.md).

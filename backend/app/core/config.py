@@ -26,6 +26,13 @@ class Settings(BaseSettings):
     break_window_start: str = "08:30"
     break_window_end: str = "15:00"
 
+    # Recordatorios por Telegram (ver app/automation/telegram_service.py).
+    # Vacíos = feature apagada: sin token no se puede llamar a la Bot API, y
+    # sin el secreto compartido los /internal/notify/* rechazan cualquier
+    # llamada (fail-closed, no fail-open).
+    telegram_bot_token: str = ""
+    scheduler_shared_secret: str = ""
+
     @property
     def cors_origins_list(self) -> list[str]:
         return [origin.strip() for origin in self.cors_origins.split(",") if origin.strip()]

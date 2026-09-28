@@ -13,6 +13,7 @@ locals {
     "iamcredentials.googleapis.com",       # Genera las credenciales temporales del deploy (Workload Identity, ver cicd.tf)
     "sts.googleapis.com",                  # Security Token Service: intercambia el token de GitHub por uno de Google (ver cicd.tf)
     "cloudresourcemanager.googleapis.com", # Requisito interno de Terraform para leer metadatos del proyecto
+    "cloudscheduler.googleapis.com",       # Cloud Scheduler: los 3 crons diarios de recordatorios por Telegram (ver scheduler.tf)
   ]
 }
 
