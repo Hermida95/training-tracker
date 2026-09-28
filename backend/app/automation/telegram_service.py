@@ -1,7 +1,8 @@
 """Envío de mensajes por Telegram (Bot API) y su formateo.
 
 Sin dependencias nuevas: la Bot API es un POST JSON normal, así que basta con
-`urllib` de la stdlib (mismo criterio que `email_report.py` con `smtplib`).
+`urllib` de la stdlib (mismo criterio que usaba `smtplib` antes de que el
+informe semanal se moviera de Gmail a Telegram, ver `weekly_report.py`).
 `send_message` recibe un `sender` inyectable para poder testear el resto del
 flujo (recordatorios, comando /hoy) sin golpear la red real.
 """

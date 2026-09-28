@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from app.automation import coach, email_report, garmin_metrics, macro, weekly_plan
+from app.automation import coach, garmin_metrics, macro, weekly_plan, weekly_report
 from app.automation.garmin_metrics import WeeklyMetrics, _parse_activity, stub
 
 MADRID = ZoneInfo("Europe/Madrid")
@@ -187,7 +187,7 @@ def test_prompt_summary_placeholder_when_no_activities():
     assert "(sin actividades registradas esta semana)" in summary
 
 
-# --- Informe semanal por email ---
+# --- Informe semanal (texto, entrega por Telegram) ---
 
 
 def _plan_with_note(note: str = "Semana de recalibración de FC.") -> dict:
@@ -197,7 +197,7 @@ def _plan_with_note(note: str = "Semana de recalibración de FC.") -> dict:
 
 
 def test_build_report_body_includes_key_sections():
-    body = email_report.build_report_body(
+    body = weekly_report.build_report_body(
         stub(), _plan_with_note(), datetime.date(2026, 8, 31), planned_count=6, completed_count=4
     )
     assert "4/6 planificados" in body
@@ -209,7 +209,7 @@ def test_build_report_body_includes_key_sections():
 
 
 def test_build_report_body_without_plan_that_week():
-    body = email_report.build_report_body(
+    body = weekly_report.build_report_body(
         stub(), _plan_with_note(), datetime.date(2026, 8, 31), planned_count=0, completed_count=2
     )
     assert "2 (sin plan generado esa semana)" in body
@@ -273,13 +273,38 @@ def test_collect_falls_back_gracefully_when_garmin_login_fails(monkeypatch):
     assert "Garmin" in m.to_prompt_summary()
 
 
-def test_send_weekly_email_uses_injected_sender_and_defaults_to_self():
-    calls = []
+# --- Envío del informe semanal por Telegram ---
 
-    def fake_sender(address, app_password, to_addr, subject, body_text):
-        calls.append((address, app_password, to_addr, subject, body_text))
 
-    email_report.send_weekly_email(
-        "yo@example.com", "app-pw", "Asunto", "Cuerpo", sender=fake_sender
+class _FakeUser:
+    def __init__(self, telegram_chat_id: str | None) -> None:
+        self.telegram_chat_id = telegram_chat_id
+
+
+def test_send_weekly_report_uses_telegram_when_linked(monkeypatch):
+    sent = []
+    monkeypatch.setattr(
+        weekly_plan.telegram_service,
+        "send_message",
+        lambda token, chat_id, text: sent.append((token, chat_id, text)),
     )
-    assert calls == [("yo@example.com", "app-pw", "yo@example.com", "Asunto", "Cuerpo")]
+    weekly_plan._send_weekly_report(_FakeUser("42"), "bot-token", "cuerpo")
+    assert sent == [("bot-token", "42", "cuerpo")]
+
+
+def test_send_weekly_report_skips_without_user_token_or_chat_id(monkeypatch):
+    sent = []
+    monkeypatch.setattr(weekly_plan.telegram_service, "send_message", lambda *a: sent.append(a))
+    weekly_plan._send_weekly_report(None, "bot-token", "cuerpo")
+    weekly_plan._send_weekly_report(_FakeUser(None), "bot-token", "cuerpo")
+    weekly_plan._send_weekly_report(_FakeUser("42"), None, "cuerpo")
+    assert sent == []
+
+
+def test_send_weekly_report_swallows_telegram_errors(monkeypatch):
+    def boom(token, chat_id, text):
+        raise RuntimeError("Telegram caído")
+
+    monkeypatch.setattr(weekly_plan.telegram_service, "send_message", boom)
+    # No debe propagar: un informe fallido no debe tumbar el resto del cron.
+    weekly_plan._send_weekly_report(_FakeUser("42"), "bot-token", "cuerpo")
